@@ -1,0 +1,1184 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EEF0EA">
+<title>ハングル単語帳</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="単語帳">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: one-column phone app. Fixed bottom tabs; study modes open as a full-screen sheet.
+   Cards borrow the 원고지 (manuscript-grid) paper of a Korean notebook. */
+:root{
+  --bg:#EEF0EA; --surface:#FAFBF7; --sunk:#E2E6DD; --ink:#1A2230; --muted:#5E675F; --line:#D2D7CC;
+  --accent:#2B47A8; --accent-ink:#FFFFFF; --accent-soft:#DCE2F4;
+  --again:#B5392A; --hard:#9A630F; --good:#2B6B4F; --easy:#2B47A8;
+  --grid:rgba(43,71,168,.075);
+  --f-ui:"Zen Kaku Gothic New","Hiragino Sans","Hiragino Kaku Gothic ProN",system-ui,sans-serif;
+  --f-ko:"Gowun Batang","AppleMyungjo","Nanum Myeongjo",serif;
+  --f-kos:"Gowun Dodum","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  --tab-h:58px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111418; --surface:#1A1E24; --sunk:#242930; --ink:#E5E8E2; --muted:#99A19B; --line:#2F353D;
+  --accent:#8FA5EE; --accent-ink:#0D1325; --accent-soft:#252E4B;
+  --again:#E27665; --hard:#D8A64E; --good:#6CBF98; --easy:#8FA5EE; --grid:rgba(143,165,238,.07); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111418; --surface:#1A1E24; --sunk:#242930; --ink:#E5E8E2; --muted:#99A19B; --line:#2F353D;
+  --accent:#8FA5EE; --accent-ink:#0D1325; --accent-soft:#252E4B;
+  --again:#E27665; --hard:#D8A64E; --good:#6CBF98; --easy:#8FA5EE; --grid:rgba(143,165,238,.07); color-scheme:dark}
+
+[hidden]{display:none!important}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.55;-webkit-text-size-adjust:100%;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink)}
+.ko{font-family:var(--f-kos)}
+.num{font-variant-numeric:tabular-nums}
+
+#app{height:100%;display:flex;flex-direction:column}
+main{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 24px)}
+.view{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:28px;padding-top:20px}
+
+/* tabs */
+.tabs{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--surface);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom,0px)}
+.tabs-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(3,1fr);height:var(--tab-h)}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;color:var(--muted);letter-spacing:.04em}
+.tab svg{width:22px;height:22px}
+.tab[aria-current="page"]{color:var(--accent)}
+
+/* type */
+h2{font-size:13px;font-weight:700;letter-spacing:.08em;color:var(--muted);margin:0 0 10px}
+.eyebrow{font-size:13px;color:var(--muted);margin:0}
+.sub{font-size:13px;color:var(--muted)}
+
+/* today */
+.today{display:flex;flex-direction:column;gap:16px}
+.today-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.today-head h1{font-size:22px;margin:0;font-weight:700;letter-spacing:.02em}
+.counts{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.counts>div{padding:12px 0 10px;display:flex;flex-direction:column}
+.counts>div+div{padding-left:14px;border-left:1px solid var(--line)}
+.counts b{font-size:32px;line-height:1.1;font-weight:500;font-variant-numeric:tabular-nums}
+.counts span{font-size:12px;color:var(--muted)}
+.counts .c-rev b{color:var(--accent)}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 18px;border-radius:10px;font-weight:700;font-size:16px}
+.btn-p{background:var(--accent);color:var(--accent-ink)}
+.btn-p:disabled{background:var(--sunk);color:var(--muted);cursor:default}
+.btn-s{background:var(--sunk)}
+.btn-line{border:1px solid var(--line);background:var(--surface)}
+.btn-block{width:100%}
+.btn-sm{min-height:36px;font-size:14px;padding:0 12px;border-radius:8px}
+
+/* forecast */
+.fc{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;align-items:end;height:92px}
+.fc-col{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%}
+.fc-bar{width:100%;max-width:30px;background:var(--accent-soft);border-radius:3px 3px 0 0;min-height:2px}
+.fc-col.today .fc-bar{background:var(--accent)}
+.fc-n{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.fc-d{font-size:11px;color:var(--muted)}
+.fc-col.today .fc-d{color:var(--ink);font-weight:700}
+
+/* progress */
+.stack{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--sunk)}
+.stack i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:10px;font-size:13px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
+
+/* range chips */
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:6px}
+.chip{height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:13px;font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.range-bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;margin-top:10px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:14px}
+.sw{width:42px;height:26px;border-radius:13px;background:var(--sunk);position:relative;transition:background .15s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform .15s}
+[aria-checked="true"] .sw{background:var(--accent)}
+[aria-checked="true"] .sw::after{transform:translateX(16px)}
+
+/* mode list */
+.modes{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.mode{display:grid;grid-template-columns:44px 1fr auto;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--line);text-align:left}
+.mode-ic{width:44px;height:44px;border-radius:10px;background:var(--sunk);display:grid;place-items:center;font-family:var(--f-ko);font-size:20px;font-weight:700;color:var(--accent)}
+.mode b{display:block;font-size:16px}
+.mode small{display:block;font-size:13px;color:var(--muted);line-height:1.4}
+.mode svg{width:18px;height:18px;color:var(--muted)}
+
+/* list */
+.search{position:sticky;top:0;z-index:2;background:var(--bg);padding:12px 0 10px;display:flex;flex-direction:column;gap:8px;margin-top:-20px}
+.search input{width:100%;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 14px}
+.filters{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters select{height:34px;border-radius:8px;border:1px solid var(--line);background:var(--surface);padding:0 8px;font-size:14px}
+.fbtn{height:34px;padding:0 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:13px;white-space:nowrap}
+.fbtn[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.rows{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:1fr auto;gap:4px 10px;padding:11px 0;border-bottom:1px solid var(--line);align-items:center}
+.row-main{min-width:0;text-align:left;display:flex;flex-direction:column}
+.row-ko{font-family:var(--f-kos);font-size:18px;line-height:1.3}
+.row-ja{font-size:13px;color:var(--muted);line-height:1.4}
+.row-side{display:flex;align-items:center;gap:6px}
+.st{font-size:11px;padding:2px 7px;border-radius:999px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.st-new{background:var(--sunk);color:var(--muted)}
+.st-lrn{background:color-mix(in srgb,var(--hard) 18%,transparent);color:var(--hard)}
+.st-rev{background:var(--accent-soft);color:var(--accent)}
+.st-mst{background:color-mix(in srgb,var(--good) 18%,transparent);color:var(--good)}
+.star{width:36px;height:36px;display:grid;place-items:center;color:var(--line)}
+.star svg{width:20px;height:20px}
+.star[aria-pressed="true"]{color:#D4A017}
+.row-detail{grid-column:1/-1;font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 14px;padding-top:4px}
+.more{padding:16px 0;text-align:center}
+
+/* settings */
+.set-group{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.set-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.set-row>div:first-child{min-width:0;flex:1 1 180px}
+.set-row small{display:block;color:var(--muted);font-size:12px}
+.seg{display:inline-flex;background:var(--sunk);border-radius:9px;padding:3px;gap:2px}
+.seg button{height:32px;padding:0 11px;border-radius:7px;font-size:13px;white-space:nowrap}
+.seg button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.12);font-weight:700}
+textarea.backup{width:100%;min-height:96px;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:10px;font-size:12px;font-family:ui-monospace,Menlo,monospace}
+.note{font-size:13px;color:var(--muted);line-height:1.7}
+.note ol{margin:6px 0 0;padding-left:1.3em}
+.tip{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;border:1px dashed var(--line);border-radius:10px;font-size:13px}
+.tip p{margin:0;flex:1}
+
+/* study sheet */
+#study{position:fixed;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.s-top{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:6px 8px 0;max-width:600px;width:100%;margin:0 auto}
+.s-title{text-align:center;font-size:14px;font-weight:700}
+.s-title small{display:block;font-weight:400;color:var(--muted);font-size:12px;font-variant-numeric:tabular-nums}
+.icon-btn{width:44px;height:44px;display:grid;place-items:center;border-radius:10px;color:var(--ink)}
+.icon-btn svg{width:22px;height:22px}
+.icon-btn:disabled{opacity:.3}
+.s-prog{height:3px;background:var(--sunk);margin:6px 16px 0;border-radius:2px;overflow:hidden;max-width:568px;align-self:center;width:calc(100% - 32px)}
+.s-prog i{display:block;height:100%;background:var(--accent);transition:width .25s}
+.s-body{flex:1;overflow-y:auto;padding:16px 16px 20px;display:flex;flex-direction:column;max-width:600px;width:100%;margin:0 auto}
+
+/* card */
+.card{position:relative;background-color:var(--surface);border:1px solid var(--line);border-radius:14px;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:28px 28px;background-position:-1px -1px}
+.card-meta{position:absolute;top:12px;left:14px;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.card-tools{position:absolute;top:4px;right:4px;display:flex}
+.card-tools .star[aria-pressed="false"]{color:var(--muted);opacity:.5}
+.big-ko{font-family:var(--f-ko);font-size:clamp(32px,10vw,46px);line-height:1.3;font-weight:700;text-align:center;word-break:keep-all;overflow-wrap:anywhere}
+.big-ja{font-size:clamp(20px,6vw,26px);line-height:1.5;font-weight:500;text-align:center;overflow-wrap:anywhere}
+.small-ko{font-family:var(--f-kos);font-size:17px;color:var(--muted);text-align:center}
+
+/* review */
+.rv-card{flex:1;min-height:300px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:14px;padding:52px 20px 28px;cursor:pointer}
+.rv-ans{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%;padding-top:16px;border-top:1px solid var(--line);animation:rise .18s ease-out}
+.rv-ans .pos{font-size:12px;color:var(--muted)}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.rv-foot{padding-top:14px;display:flex;flex-direction:column;gap:8px}
+.rates{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.rate{min-height:62px;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}
+.rate b{font-size:15px}
+.rate span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.rate.r1 b{color:var(--again)} .rate.r2 b{color:var(--hard)} .rate.r3 b{color:var(--good)} .rate.r4 b{color:var(--easy)}
+.rate:active{background:var(--sunk)}
+.kbd-hint{font-size:11px;color:var(--muted);text-align:center}
+@media (hover:none){.kbd-hint{display:none}}
+
+/* flashcards */
+.fl-wrap{flex:1;min-height:320px;perspective:1200px;position:relative;touch-action:pan-y}
+.fl{position:absolute;inset:0;transform-style:preserve-3d;transition:transform .38s cubic-bezier(.2,.7,.2,1)}
+.fl.flipped{transform:rotateY(180deg)}
+.fl .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:12px;padding:52px 20px 28px}
+.fl .back{transform:rotateY(180deg)}
+.fl-drag{position:absolute;inset:0;will-change:transform}
+.fl-stamp{position:absolute;top:18px;font-size:14px;font-weight:700;padding:4px 10px;border-radius:6px;border:2px solid currentColor;opacity:0;pointer-events:none;z-index:3}
+.fl-stamp.l{left:18px;color:var(--hard);transform:rotate(-8deg)}
+.fl-stamp.r{right:18px;color:var(--good);transform:rotate(8deg)}
+.fl-foot{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;padding-top:14px}
+.fl-foot .btn{min-height:52px}
+.b-still{border:1.5px solid var(--hard);color:var(--hard);background:var(--surface)}
+.b-know{border:1.5px solid var(--good);color:var(--good);background:var(--surface)}
+.tally{display:flex;justify-content:space-between;font-size:13px;padding-bottom:10px;font-variant-numeric:tabular-nums}
+.tally .l{color:var(--hard)} .tally .r{color:var(--good)}
+
+/* questions */
+.q{display:flex;flex-direction:column;gap:14px}
+.q-prompt{padding:44px 18px 26px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.q-label{font-size:12px;color:var(--muted);letter-spacing:.06em}
+.opts{display:grid;grid-template-columns:1fr;gap:8px}
+@media (min-width:520px){.opts{grid-template-columns:1fr 1fr}}
+.opt{min-height:54px;padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);text-align:left;display:flex;align-items:center;gap:12px;line-height:1.4}
+.opt .n{width:22px;height:22px;flex:none;border-radius:6px;background:var(--sunk);display:grid;place-items:center;font-size:12px;color:var(--muted)}
+.opt.ko-opt{font-family:var(--f-kos);font-size:18px}
+.opt.ok{border-color:var(--good);background:color-mix(in srgb,var(--good) 12%,var(--surface))}
+.opt.ng{border-color:var(--again);background:color-mix(in srgb,var(--again) 10%,var(--surface))}
+.opt:disabled{cursor:default}
+.wr{display:flex;gap:8px}
+.wr input{flex:1;min-width:0;height:52px;border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:0 14px;font-family:var(--f-kos);font-size:20px}
+.wr input.ok{border-color:var(--good)} .wr input.ng{border-color:var(--again)}
+.fb{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.fb.ok{background:color-mix(in srgb,var(--good) 12%,transparent);color:var(--good)}
+.fb.ng{background:color-mix(in srgb,var(--again) 10%,transparent)}
+.fb.ng .t{color:var(--again);font-weight:700}
+.fb .ans{font-family:var(--f-kos);font-size:20px;color:var(--ink)}
+.fb-acts{display:flex;gap:8px;flex-wrap:wrap}
+.link{color:var(--accent);font-size:14px;text-decoration:underline;text-underline-offset:3px}
+
+/* round / results */
+.res{display:flex;flex-direction:column;gap:22px;padding-top:8px}
+.res h3{font-size:22px;margin:0}
+.res-score{display:flex;align-items:baseline;gap:8px}
+.res-score b{font-size:56px;line-height:1;font-weight:500;font-variant-numeric:tabular-nums}
+.res-list{display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.res-item{display:grid;grid-template-columns:20px 1fr;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);align-items:start}
+.res-item .mk{font-weight:700;font-size:15px;line-height:1.5}
+.mk.ok{color:var(--good)} .mk.ng{color:var(--again)}
+.res-item .ko{font-size:17px}
+.res-item small{display:block;color:var(--muted);font-size:13px}
+.res-item .yours{color:var(--again)}
+.res-acts{display:flex;flex-direction:column;gap:8px}
+
+/* setup */
+.setup{display:flex;flex-direction:column;gap:20px}
+.setup h3{margin:0;font-size:20px}
+.setup p{margin:0}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.check{height:40px;padding:0 14px;border-radius:9px;border:1px solid var(--line);background:var(--surface);font-size:14px}
+.check[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft);font-weight:700}
+
+/* test sheet */
+.tq{display:flex;flex-direction:column;gap:10px;padding:18px 0;border-bottom:1px solid var(--line)}
+.tq-h{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+.tq-p{font-size:20px;font-weight:500}
+.tq-p.ko{font-family:var(--f-ko);font-weight:700;font-size:26px}
+.tf{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tf-pair{display:flex;flex-direction:column;gap:2px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+.tf-pair .ko{font-size:20px}
+
+/* match */
+.mt-head{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:12px}
+.mt-time{font-size:28px;font-variant-numeric:tabular-nums;font-weight:500}
+.mt-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;flex:1;max-height:560px}
+.tile{border-radius:10px;border:1px solid var(--line);background:var(--surface);padding:8px;display:grid;place-items:center;text-align:center;font-size:14px;line-height:1.35;min-height:76px;overflow-wrap:anywhere;transition:opacity .25s,transform .25s}
+.tile.ko{font-family:var(--f-kos);font-size:19px}
+.tile.sel{border-color:var(--accent);background:var(--accent-soft)}
+.tile.bad{border-color:var(--again);animation:shake .3s}
+.tile.gone{opacity:0;transform:scale(.92);pointer-events:none}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+
+.empty{display:flex;flex-direction:column;gap:12px;align-items:flex-start;padding:24px 0}
+.empty h3{margin:0;font-size:20px}
+.toast{position:fixed;left:50%;bottom:calc(var(--tab-h) + env(safe-area-inset-bottom,0px) + 14px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:13px;z-index:20;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+
+<div id="app">
+  <main id="main">
+    <section class="view" id="v-home" aria-label="今日"></section>
+    <section class="view" id="v-list" aria-label="単語" hidden></section>
+    <section class="view" id="v-set" aria-label="設定" hidden></section>
+  </main>
+  <nav class="tabs" aria-label="メニュー">
+    <div class="tabs-in">
+      <button class="tab" data-tab="home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/><path d="M8 14l2.5 2.5L16 12"/></svg>今日</button>
+      <button class="tab" data-tab="list"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 4.5h11.5a2 2 0 012 2V20H7a2 2 0 01-2-2V4.5z"/><path d="M5 18a2 2 0 012-2h11.5M9 8.5h6M9 12h4"/></svg>単語</button>
+      <button class="tab" data-tab="set"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>設定</button>
+    </div>
+  </nav>
+  <section id="study" hidden aria-modal="true" role="dialog">
+    <div class="s-top">
+      <button class="icon-btn" id="s-close" aria-label="閉じる"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <div class="s-title" id="s-title"></div>
+      <button class="icon-btn" id="s-aux" aria-label="" hidden></button>
+    </div>
+    <div class="s-prog"><i id="s-prog" style="width:0"></i></div>
+    <div class="s-body" id="s-body"></div>
+  </section>
+</div>
+
+<script>
+const WORDS = [{"i":1,"k":"아이","j":"子供","p":"名","l":[1]},{"i":2,"k":"이","j":"この ／ 2（漢数詞）","p":"名・漢数詞","l":[1,6,10]},{"i":3,"k":"에","j":"～に","p":"助","l":[1,7]},{"i":4,"k":"오이","j":"キュウリ","p":"名","l":[1]},{"i":5,"k":"예","j":"はい（フォーマルな印象）","p":"名","l":[1]},{"i":6,"k":"여우","j":"キツネ","p":"名","l":[1]},{"i":7,"k":"이유","j":"理由","p":"名","l":[1,16]},{"i":8,"k":"우유","j":"牛乳","p":"名","l":[1]},{"i":9,"k":"여유","j":"余裕","p":"名","l":[1]},{"i":10,"k":"안녕하세요?","j":"こんにちは（お元気ですか？）","p":"表現","l":[1,6]},{"i":11,"k":"네","j":"はい（柔らかな印象） ／ 4（助数詞の前）","p":"","l":[1,6,9]},{"i":12,"k":"아니요","j":"いいえ","p":"表現","l":[1,6]},{"i":13,"k":"아뇨","j":"いいえ（会話での縮約形）","p":"","l":[1]},{"i":14,"k":"처음 뵙겠습니다","j":"はじめまして","p":"表現","l":[1]},{"i":15,"k":"처음","j":"はじめ、初めて","p":"名","l":[1,10]},{"i":16,"k":"뵙겠습니다","j":"目にかかります","p":"表現","l":[1]},{"i":17,"k":"잘 부탁합니다","j":"よろしくお願いします","p":"表現","l":[1]},{"i":18,"k":"반갑습니다","j":"お会いできてうれしいです","p":"表現","l":[1]},{"i":19,"k":"반가워요","j":"お会いできてうれしいです（打ち解けた形）","p":"表現","l":[1]},{"i":20,"k":"제 이름은 ...입니다","j":"私の名前は...です","p":"表現","l":[1]},{"i":21,"k":"저는 ...입니다","j":"私は...です","p":"表現","l":[1]},{"i":22,"k":"우리","j":"私たち","p":"名","l":[2]},{"i":23,"k":"나","j":"わたし（ぼく、おれ）","p":"名","l":[2]},{"i":24,"k":"너","j":"あなた（きみ、おまえ）","p":"名","l":[2]},{"i":25,"k":"누나","j":"（弟から見た）姉","p":"名","l":[2,5]},{"i":26,"k":"어머니","j":"母","p":"名","l":[2,5]},{"i":27,"k":"나라","j":"国","p":"名","l":[2]},{"i":28,"k":"미래","j":"未来","p":"名","l":[2]},{"i":29,"k":"버스","j":"バス","p":"名","l":[2,11]},{"i":30,"k":"자리","j":"席","p":"名","l":[2,18]},{"i":31,"k":"가사","j":"歌詞","p":"名","l":[2]},{"i":32,"k":"도서","j":"図書","p":"名","l":[2]},{"i":33,"k":"여기","j":"ここ","p":"名","l":[2,6,22]},{"i":34,"k":"거기","j":"そこ","p":"名","l":[2,6]},{"i":35,"k":"저기","j":"あそこ","p":"名","l":[2,6]},{"i":36,"k":"가구","j":"家具","p":"名","l":[2]},{"i":37,"k":"부부","j":"夫婦","p":"名","l":[2]},{"i":38,"k":"고기","j":"肉","p":"名","l":[2]},{"i":39,"k":"자주","j":"よく、頻繁に","p":"副","l":[2,11]},{"i":40,"k":"기다리다","j":"待つ","p":"動","l":[2,11,17,20]},{"i":41,"k":"여보세요","j":"もしもし","p":"表現","l":[2,7]},{"i":42,"k":"아버지","j":"父","p":"名","l":[2,5,6]},{"i":43,"k":"두부","j":"豆腐","p":"名","l":[2]},{"i":44,"k":"이거","j":"これ（口語）","p":"名","l":[2,7]},{"i":45,"k":"하나","j":"ひとつ","p":"名","l":[2,6]},{"i":46,"k":"어디","j":"どこ","p":"名","l":[2,7]},{"i":47,"k":"누구","j":"誰","p":"名","l":[2,6]},{"i":48,"k":"여자","j":"女","p":"名","l":[2]},{"i":49,"k":"어서 오세요","j":"いらっしゃいませ／どうぞお入りください","p":"表現","l":[2]},{"i":50,"k":"여기요","j":"すみません（呼びかけ）／これです","p":"表現","l":[2,9]},{"i":51,"k":"저기요","j":"あの、すみません（呼び止め）","p":"表現","l":[2]},{"i":52,"k":"안녕히 가세요","j":"さようなら（去る人に対して）","p":"表現","l":[2]},{"i":53,"k":"안녕히 계세요","j":"さようなら（残る人に対して）","p":"表現","l":[2]},{"i":54,"k":"감사합니다","j":"ありがとうございます","p":"表現","l":[2]},{"i":55,"k":"고맙습니다","j":"ありがとうございます","p":"表現","l":[2]},{"i":56,"k":"고마워요","j":"ありがとう（親しみのある形）","p":"表現","l":[2,7]},{"i":57,"k":"또 오세요","j":"また来てください","p":"表現","l":[2]},{"i":58,"k":"이거 하나 주세요","j":"これ一つください","p":"表現","l":[2]},{"i":59,"k":"커피","j":"コーヒー","p":"名","l":[3,9]},{"i":60,"k":"스포츠","j":"スポーツ","p":"名","l":[3]},{"i":61,"k":"하루","j":"いちにち","p":"名","l":[3]},{"i":62,"k":"타요","j":"乗ります","p":"動活用","l":[3]},{"i":63,"k":"비싸요","j":"（値段が）高いです","p":"形活用","l":[3]},{"i":64,"k":"그때","j":"その時","p":"名","l":[3]},{"i":65,"k":"바빠요","j":"忙しいです","p":"形活用","l":[3]},{"i":66,"k":"찌개","j":"チゲ","p":"名","l":[3]},{"i":67,"k":"아까","j":"さっき","p":"副","l":[3]},{"i":68,"k":"과자","j":"菓子","p":"名","l":[3]},{"i":69,"k":"왜요?","j":"なぜですか？","p":"表現","l":[3]},{"i":70,"k":"회사","j":"会社","p":"名","l":[3,7,22]},{"i":71,"k":"의자","j":"椅子","p":"名","l":[3]},{"i":72,"k":"뭐","j":"何","p":"名","l":[3,11]},{"i":73,"k":"스웨터","j":"セーター","p":"名","l":[3]},{"i":74,"k":"뒤","j":"後ろ","p":"名","l":[3,7]},{"i":75,"k":"예의","j":"礼儀","p":"名","l":[3]},{"i":76,"k":"나의 하루","j":"私の一日","p":"表現","l":[3]},{"i":77,"k":"알겠습니까?","j":"わかりましたか？","p":"表現","l":[3]},{"i":78,"k":"알겠습니다","j":"わかりました","p":"表現","l":[3]},{"i":79,"k":"알다","j":"知る、わかる","p":"動","l":[3,8,16,21]},{"i":80,"k":"잘 모르겠습니다","j":"よくわかりません","p":"表現","l":[3]},{"i":81,"k":"모르다","j":"わからない、知らない","p":"動","l":[3,15,16,17]},{"i":82,"k":"잘 듣고 따라 하세요","j":"よく聞いて真似してください","p":"表現","l":[3]},{"i":83,"k":"잘했어요!","j":"よくできました！","p":"表現","l":[3]},{"i":84,"k":"또 만나요","j":"また会いましょう","p":"表現","l":[3]},{"i":85,"k":"안녕","j":"元気？／バイバイ（親しい間柄）","p":"表現","l":[3,4]},{"i":86,"k":"일본","j":"日本","p":"名","l":[4,6,7,8,11]},{"i":87,"k":"마음","j":"心、気持ち","p":"名","l":[4,6]},{"i":88,"k":"얼마","j":"いくら","p":"名","l":[4]},{"i":89,"k":"옷","j":"服","p":"名","l":[4,17]},{"i":90,"k":"밥","j":"ご飯","p":"名","l":[4]},{"i":91,"k":"밖","j":"外","p":"名","l":[4,7]},{"i":92,"k":"한국","j":"韓国","p":"名","l":[4,6,8,11,12]},{"i":93,"k":"약속","j":"約束","p":"名","l":[4,7]},{"i":94,"k":"받침","j":"パッチム","p":"名","l":[4]},{"i":95,"k":"계산","j":"計算","p":"名","l":[4]},{"i":96,"k":"미국","j":"アメリカ","p":"名","l":[4]},{"i":97,"k":"음악","j":"音楽","p":"名","l":[4]},{"i":98,"k":"한국어","j":"韓国語","p":"名","l":[4]},{"i":99,"k":"고양이","j":"猫","p":"名","l":[4]},{"i":100,"k":"영어","j":"英語","p":"名","l":[4]},{"i":101,"k":"일본어","j":"日本語","p":"名","l":[4,7]},{"i":102,"k":"같아요","j":"同じです","p":"形活用","l":[4]},{"i":103,"k":"있어요","j":"あります、います","p":"存活用","l":[4,7]},{"i":104,"k":"높아요","j":"高いです","p":"形活用","l":[4]},{"i":105,"k":"알아요","j":"知っています","p":"動活用","l":[4]},{"i":106,"k":"앉다","j":"座る","p":"動","l":[4,13,18]},{"i":107,"k":"넓다","j":"広い","p":"形","l":[4]},{"i":108,"k":"없다","j":"ない、いない","p":"存","l":[4,16,17]},{"i":109,"k":"읽다","j":"読む","p":"動","l":[4,8,11,12,14,16,17,18,20]},{"i":110,"k":"젊다","j":"若い","p":"形","l":[4,16]},{"i":111,"k":"않다","j":"～しない（否定）","p":"補助動詞","l":[4]},{"i":112,"k":"잃다","j":"なくす","p":"動","l":[4]},{"i":113,"k":"밟다","j":"踏む","p":"動","l":[4]},{"i":114,"k":"읽어요","j":"読みます","p":"動活用","l":[4]},{"i":115,"k":"밝아요","j":"明るいです","p":"形活用","l":[4]},{"i":116,"k":"앉아요","j":"座ります","p":"動活用","l":[4]},{"i":117,"k":"죄송합니다","j":"申し訳ありません","p":"表現","l":[4]},{"i":118,"k":"미안합니다","j":"ごめんなさい","p":"表現","l":[4]},{"i":119,"k":"미안해요","j":"ごめんね","p":"表現","l":[4]},{"i":120,"k":"축하해요","j":"おめでとうございます","p":"表現","l":[4,5]},{"i":121,"k":"생일 축하해요","j":"誕生日おめでとうございます","p":"表現","l":[4]},{"i":122,"k":"오랜만이에요","j":"お久しぶりです","p":"表現","l":[4]},{"i":123,"k":"잘 지냈어요?","j":"お元気でしたか？","p":"表現","l":[4]},{"i":124,"k":"맛있게 드세요","j":"おいしく召し上がってください","p":"表現","l":[4,9]},{"i":125,"k":"잘 먹겠습니다","j":"いただきます","p":"表現","l":[4,9]},{"i":126,"k":"잘 먹었습니다","j":"ごちそうさまでした","p":"表現","l":[4]},{"i":127,"k":"씨","j":"～さん","p":"名","l":[4]},{"i":128,"k":"오늘","j":"今日","p":"名","l":[4,7]},{"i":129,"k":"생일","j":"誕生日","p":"名","l":[4,7]},{"i":130,"k":"선물","j":"プレゼント","p":"名","l":[4,14,17]},{"i":131,"k":"와!","j":"わあ！","p":"感","l":[4]},{"i":132,"k":"군마","j":"群馬","p":"名","l":[5]},{"i":133,"k":"삿포로","j":"札幌","p":"名","l":[5,15]},{"i":134,"k":"오사카","j":"大阪","p":"名","l":[5]},{"i":135,"k":"큐슈","j":"九州","p":"名","l":[5]},{"i":136,"k":"레이코","j":"令子","p":"名","l":[5]},{"i":137,"k":"티켓","j":"チケット","p":"名","l":[5]},{"i":138,"k":"센터","j":"センター","p":"名","l":[5]},{"i":139,"k":"트윈","j":"ツイン","p":"名","l":[5]},{"i":140,"k":"드라이어","j":"ドライヤー","p":"名","l":[5]},{"i":141,"k":"가나자와","j":"金沢","p":"名","l":[5]},{"i":142,"k":"지바","j":"千葉","p":"名","l":[5,11]},{"i":143,"k":"홋카이도","j":"北海道","p":"名","l":[5]},{"i":144,"k":"도쿄","j":"東京","p":"名","l":[5,11]},{"i":145,"k":"센다이","j":"仙台","p":"名","l":[5]},{"i":146,"k":"아이치","j":"愛知","p":"名","l":[5]},{"i":147,"k":"입국","j":"入国","p":"名","l":[5]},{"i":148,"k":"숙제","j":"宿題","p":"名","l":[5,7]},{"i":149,"k":"젓가락","j":"箸","p":"名","l":[5]},{"i":150,"k":"있다","j":"ある、いる","p":"存","l":[5,17]},{"i":151,"k":"학번","j":"学番（入学年度）","p":"名","l":[5,10]},{"i":152,"k":"못해요","j":"できません","p":"表現","l":[5]},{"i":153,"k":"좋다","j":"良い","p":"形","l":[5,11,17,21]},{"i":154,"k":"입학","j":"入学","p":"名","l":[5]},{"i":155,"k":"그렇다","j":"そうだ","p":"形","l":[5,21]},{"i":156,"k":"약하다","j":"弱い","p":"形","l":[5]},{"i":157,"k":"많다","j":"多い","p":"形","l":[5,12,16,19]},{"i":158,"k":"백화점","j":"デパート","p":"名","l":[5]},{"i":159,"k":"전화","j":"電話","p":"名","l":[5]},{"i":160,"k":"남학생","j":"男子学生","p":"名","l":[5]},{"i":161,"k":"성함","j":"お名前","p":"名","l":[5,13]},{"i":162,"k":"결혼","j":"結婚","p":"名","l":[5]},{"i":163,"k":"좋아요","j":"良いです","p":"形活用","l":[5]},{"i":164,"k":"많이","j":"たくさん","p":"副","l":[5,12]},{"i":165,"k":"은행","j":"銀行","p":"名","l":[5,7,19]},{"i":166,"k":"번호","j":"番号","p":"名","l":[5]},{"i":167,"k":"올해","j":"今年","p":"名","l":[5,22]},{"i":168,"k":"괜찮아요","j":"大丈夫です（？で「大丈夫ですか？」）","p":"形活用","l":[5]},{"i":169,"k":"싫어요","j":"嫌です","p":"形活用","l":[5]},{"i":170,"k":"학년","j":"学年","p":"名","l":[5,10]},{"i":171,"k":"거짓말","j":"嘘","p":"名","l":[5,6,22]},{"i":172,"k":"입니다","j":"～です","p":"","l":[5]},{"i":173,"k":"작년","j":"去年","p":"名","l":[5,22]},{"i":174,"k":"박물관","j":"博物館","p":"名","l":[5,13]},{"i":175,"k":"있는데","j":"いるけれど","p":"","l":[5]},{"i":176,"k":"입문","j":"入門","p":"名","l":[5]},{"i":177,"k":"꽃말","j":"花言葉","p":"名","l":[5]},{"i":178,"k":"밥 먹었어요?","j":"ごはん、食べましたか？","p":"表現","l":[5]},{"i":179,"k":"먹었어요","j":"食べました","p":"表現","l":[5]},{"i":180,"k":"안 먹었어요","j":"食べていません","p":"表現","l":[5]},{"i":181,"k":"맛있어요","j":"美味しいです","p":"表現","l":[5]},{"i":182,"k":"수고하셨습니다","j":"お疲れ様でした","p":"表現","l":[5]},{"i":183,"k":"오빠","j":"兄（妹から）","p":"名","l":[5,7,22]},{"i":184,"k":"언니","j":"姉（妹から）","p":"名","l":[5,7,22]},{"i":185,"k":"형","j":"兄（弟から）","p":"名","l":[5]},{"i":186,"k":"여동생","j":"妹","p":"名","l":[5]},{"i":187,"k":"남동생","j":"弟","p":"名","l":[5,22]},{"i":188,"k":"동생","j":"年下の兄弟","p":"名","l":[5]},{"i":189,"k":"친구","j":"友達","p":"名","l":[6,9,12,17,19]},{"i":190,"k":"책","j":"本","p":"名","l":[6,14]},{"i":191,"k":"선배","j":"先輩","p":"名","l":[6]},{"i":192,"k":"정말","j":"本当","p":"名","l":[6,12]},{"i":193,"k":"학생","j":"学生","p":"名","l":[6,16,17]},{"i":194,"k":"후배","j":"後輩","p":"名","l":[6]},{"i":195,"k":"유학생","j":"留学生","p":"名","l":[6]},{"i":196,"k":"은","j":"～は","p":"助","l":[6]},{"i":197,"k":"는","j":"～は","p":"助","l":[6]},{"i":198,"k":"이름","j":"名前","p":"名","l":[6]},{"i":199,"k":"하고","j":"～と","p":"助","l":[6]},{"i":200,"k":"도","j":"～も","p":"助","l":[6]},{"i":201,"k":"이 사람","j":"この人","p":"名","l":[6]},{"i":202,"k":"그 친구","j":"その友達","p":"名","l":[6]},{"i":203,"k":"저 책","j":"あの本","p":"名","l":[6]},{"i":204,"k":"어느 나라","j":"どの国","p":"名","l":[6]},{"i":205,"k":"그","j":"その","p":"名","l":[6]},{"i":206,"k":"저","j":"あの、私","p":"名","l":[6]},{"i":207,"k":"어느","j":"どの","p":"名","l":[6]},{"i":208,"k":"사사키 씨","j":"佐々木さん","p":"名","l":[6]},{"i":209,"k":"집","j":"家","p":"名","l":[6,11,17]},{"i":210,"k":"지하철","j":"地下鉄","p":"名","l":[6,11]},{"i":211,"k":"회사원","j":"会社員","p":"名","l":[6,18]},{"i":212,"k":"교과서","j":"教科書","p":"名","l":[6]},{"i":213,"k":"대학생","j":"大学生","p":"名","l":[6]},{"i":214,"k":"선생님","j":"先生","p":"名","l":[6]},{"i":215,"k":"학생 식당","j":"学食","p":"名","l":[6]},{"i":216,"k":"제 이름","j":"私の名前","p":"名","l":[6]},{"i":217,"k":"한국 사람","j":"韓国人","p":"名","l":[6]},{"i":218,"k":"일본 사람","j":"日本人","p":"名","l":[6]},{"i":219,"k":"그래요","j":"そうです","p":"表現","l":[6]},{"i":220,"k":"서울 사람","j":"ソウルの人","p":"名","l":[6]},{"i":221,"k":"부산 사람","j":"釜山の人","p":"名","l":[6]},{"i":222,"k":"도쿄 사람","j":"東京の人","p":"名","l":[6]},{"i":223,"k":"오사카 사람","j":"大阪の人","p":"名","l":[6]},{"i":224,"k":"사사키 씨 것","j":"佐々木さんの物","p":"名","l":[6]},{"i":225,"k":"자전거","j":"自転車","p":"名","l":[6,11]},{"i":226,"k":"어느 나라 사람","j":"どの国の人","p":"名","l":[6]},{"i":227,"k":"이것","j":"これ","p":"名","l":[6,7,22]},{"i":228,"k":"가，이","j":"～が","p":"助","l":[7]},{"i":229,"k":"제가","j":"私が","p":"","l":[7]},{"i":230,"k":"누가","j":"誰が／誰かが","p":"名","l":[7,18]},{"i":231,"k":"-가 아니에요 / -이 아니에요","j":"～ではありません","p":"表現","l":[7]},{"i":232,"k":"앞","j":"前","p":"名","l":[7]},{"i":233,"k":"옆","j":"横","p":"名","l":[7]},{"i":234,"k":"위","j":"上","p":"名","l":[7]},{"i":235,"k":"아래","j":"下","p":"名","l":[7]},{"i":236,"k":"밑","j":"下、底","p":"名","l":[7]},{"i":237,"k":"안","j":"中、内","p":"名","l":[7]},{"i":238,"k":"속","j":"中、内部","p":"名","l":[7]},{"i":239,"k":"사이","j":"間","p":"名","l":[7]},{"i":240,"k":"오른쪽","j":"右","p":"名","l":[7,13]},{"i":241,"k":"왼쪽","j":"左","p":"名","l":[7]},{"i":242,"k":"그것","j":"それ","p":"名","l":[7]},{"i":243,"k":"그거","j":"それ（口語）","p":"名","l":[7]},{"i":244,"k":"저것","j":"あれ","p":"名","l":[7]},{"i":245,"k":"저거","j":"あれ（口語）","p":"名","l":[7]},{"i":246,"k":"어느 것","j":"どれ","p":"名","l":[7]},{"i":247,"k":"어느 거","j":"どれ（口語）","p":"名","l":[7]},{"i":248,"k":"수업","j":"授業","p":"名","l":[7]},{"i":249,"k":"시간","j":"時間","p":"名","l":[7,9,16]},{"i":250,"k":"한 시","j":"1時","p":"","l":[7,9]},{"i":251,"k":"없어요","j":"ありません","p":"","l":[7]},{"i":252,"k":"오전","j":"午前","p":"名","l":[7,9]},{"i":253,"k":"해외","j":"海外","p":"名","l":[7]},{"i":254,"k":"아침","j":"朝","p":"名","l":[7,9]},{"i":255,"k":"입구","j":"入口","p":"名","l":[7,11]},{"i":256,"k":"카페","j":"カフェ","p":"名","l":[7]},{"i":257,"k":"역","j":"駅","p":"名","l":[7]},{"i":258,"k":"역 앞","j":"駅前","p":"","l":[7]},{"i":259,"k":"다나카 씨","j":"田中さん","p":"名","l":[7]},{"i":260,"k":"주말","j":"週末","p":"名","l":[7,10]},{"i":261,"k":"근처","j":"近く、近所","p":"名","l":[7]},{"i":262,"k":"편의점","j":"コンビニ","p":"名","l":[7,19]},{"i":263,"k":"이것이 (이게)","j":"これが","p":"","l":[7]},{"i":264,"k":"그것이 (그게)","j":"それが","p":"","l":[7]},{"i":265,"k":"저것이 (저게)","j":"あれが","p":"","l":[7]},{"i":266,"k":"어느 것이 (어느 게)","j":"どれが","p":"","l":[7]},{"i":267,"k":"이것은 (이건)","j":"これは","p":"","l":[7]},{"i":268,"k":"그것은 (그건)","j":"それは","p":"","l":[7]},{"i":269,"k":"저것은 (저건)","j":"あれは","p":"","l":[7]},{"i":270,"k":"지금","j":"今","p":"名・副","l":[7]},{"i":271,"k":"이름이 뭐예요?","j":"お名前は何ですか？","p":"表現","l":[7]},{"i":272,"k":"학교","j":"学校","p":"名","l":[7,8,11]},{"i":273,"k":"오쿠보 역","j":"大久保駅","p":"","l":[7]},{"i":274,"k":"교사","j":"教師","p":"名","l":[7,18]},{"i":275,"k":"공무원","j":"公務員","p":"名","l":[7,18]},{"i":276,"k":"의사","j":"医師","p":"名","l":[7,18]},{"i":277,"k":"책상","j":"机","p":"名","l":[7]},{"i":278,"k":"교실","j":"教室","p":"名","l":[7]},{"i":279,"k":"사무실","j":"事務室","p":"名","l":[7,19]},{"i":280,"k":"우체국","j":"郵便局","p":"名","l":[7]},{"i":281,"k":"식당","j":"食堂","p":"名","l":[7]},{"i":282,"k":"가방","j":"カバン","p":"名","l":[7,13]},{"i":283,"k":"정말이에요","j":"本当です","p":"表現","l":[7]},{"i":284,"k":"방","j":"部屋","p":"名","l":[7,13]},{"i":285,"k":"휴대폰","j":"携帯電話","p":"名","l":[7]},{"i":286,"k":"모자","j":"帽子","p":"名","l":[7]},{"i":287,"k":"하다","j":"する","p":"動","l":[8,18]},{"i":288,"k":"만들다","j":"作る","p":"動","l":[8,11,14,16,17,18,19,20,21,22]},{"i":289,"k":"먹다","j":"食べる","p":"動","l":[8,11,14,18,19,20]},{"i":290,"k":"에서","j":"～で","p":"助","l":[8]},{"i":291,"k":"호텔","j":"ホテル","p":"名","l":[8]},{"i":292,"k":"어디서","j":"どこで","p":"","l":[8]},{"i":293,"k":"여기서","j":"ここで","p":"","l":[8]},{"i":294,"k":"거기서","j":"そこで","p":"","l":[8]},{"i":295,"k":"저기서","j":"あそこで","p":"","l":[8]},{"i":296,"k":"마시다","j":"飲む","p":"動","l":[8,11,18]},{"i":297,"k":"오다","j":"来る","p":"動","l":[8,12,14,17,21]},{"i":298,"k":"가다","j":"行く","p":"動","l":[8,11,14,18,19,20,21,22]},{"i":299,"k":"놀다","j":"遊ぶ","p":"動","l":[8,12,18,19]},{"i":300,"k":"공부하다","j":"勉強する","p":"動","l":[8,16]},{"i":301,"k":"만나다","j":"会う","p":"動","l":[8,12,17,18,19]},{"i":302,"k":"사다","j":"買う","p":"動","l":[8,11,17,18]},{"i":303,"k":"무엇","j":"何","p":"名","l":[8,11]},{"i":304,"k":"댄스","j":"ダンス","p":"名","l":[8,16]},{"i":305,"k":"좋아하다","j":"好きだ","p":"動","l":[8]},{"i":306,"k":"싫어하다","j":"嫌いだ","p":"動","l":[8]},{"i":307,"k":"지 않다","j":"～しない（後置否定）","p":"","l":[8]},{"i":308,"k":"멀다","j":"遠い","p":"形","l":[8]},{"i":309,"k":"보통","j":"普段、普通","p":"名・副","l":[8]},{"i":310,"k":"일본 음식","j":"日本の食べ物","p":"名","l":[8]},{"i":311,"k":"특히","j":"特に","p":"副","l":[8]},{"i":312,"k":"도서관","j":"図書館","p":"名","l":[8,19]},{"i":313,"k":"한국 음식","j":"韓国の食べ物","p":"名","l":[8]},{"i":314,"k":"쉬다","j":"休む","p":"動","l":[8,11,16,20]},{"i":315,"k":"떡볶이","j":"トッポッキ","p":"名","l":[8]},{"i":316,"k":"스시","j":"寿司","p":"名","l":[8]},{"i":317,"k":"낫토","j":"納豆","p":"名","l":[8]},{"i":318,"k":"김치","j":"キムチ","p":"名","l":[8,9]},{"i":319,"k":"한국 드라마","j":"韓国ドラマ","p":"名","l":[8]},{"i":320,"k":"영화","j":"映画","p":"名","l":[8,9,16,17,22]},{"i":321,"k":"한국 영화","j":"韓国映画","p":"名","l":[8]},{"i":322,"k":"보다","j":"見る","p":"動","l":[8,11,17,18]},{"i":323,"k":"한국 요리","j":"韓国料理","p":"名","l":[8]},{"i":324,"k":"갈비","j":"カルビ","p":"名","l":[8]},{"i":325,"k":"양념갈비","j":"味付きカルビ","p":"名","l":[8]},{"i":326,"k":"생갈비","j":"生カルビ","p":"名","l":[8]},{"i":327,"k":"일본 애니메","j":"日本のアニメ","p":"名","l":[8]},{"i":328,"k":"지브리 애니메","j":"ジブリアニメ","p":"名","l":[8]},{"i":329,"k":"도토로","j":"トトロ","p":"名","l":[8]},{"i":330,"k":"디즈니 애니메","j":"ディズニーアニメ","p":"名","l":[8]},{"i":331,"k":"노래","j":"歌","p":"名","l":[8,22]},{"i":332,"k":"점심","j":"昼食、お昼","p":"名","l":[8,20]},{"i":333,"k":"드라마","j":"ドラマ","p":"名","l":[8]},{"i":334,"k":"듣다","j":"聞く","p":"動","l":[8,12,15,16,17,18,19,20,21,22]},{"i":335,"k":"그래서","j":"それで、だから","p":"接続詞","l":[8,11]},{"i":336,"k":"그리고","j":"そして","p":"接続詞","l":[8,11]},{"i":337,"k":"오후","j":"午後","p":"名","l":[8,9]},{"i":338,"k":"저녁","j":"夕方","p":"名","l":[8,9]},{"i":339,"k":"음식","j":"食べ物","p":"名","l":[9]},{"i":340,"k":"두 시","j":"2時","p":"","l":[9]},{"i":341,"k":"세 시","j":"3時","p":"","l":[9]},{"i":342,"k":"네 시","j":"4時","p":"","l":[9]},{"i":343,"k":"다섯 시","j":"5時","p":"","l":[9]},{"i":344,"k":"여섯 시","j":"6時","p":"","l":[9]},{"i":345,"k":"일곱 시","j":"7時","p":"","l":[9]},{"i":346,"k":"여덟 시","j":"8時","p":"","l":[9]},{"i":347,"k":"아홉 시","j":"9時","p":"","l":[9]},{"i":348,"k":"열 시","j":"10時","p":"","l":[9]},{"i":349,"k":"열한 시","j":"11時","p":"","l":[9]},{"i":350,"k":"열두 시","j":"12時","p":"","l":[9]},{"i":351,"k":"한 개","j":"1個","p":"","l":[9]},{"i":352,"k":"두 개","j":"2個","p":"","l":[9]},{"i":353,"k":"세 개","j":"3個","p":"","l":[9]},{"i":354,"k":"네 개","j":"4個","p":"","l":[9]},{"i":355,"k":"다섯 개","j":"5個","p":"","l":[9]},{"i":356,"k":"여섯 개","j":"6個","p":"","l":[9]},{"i":357,"k":"일곱 개","j":"7個","p":"","l":[9]},{"i":358,"k":"여덟 개","j":"8個","p":"","l":[9]},{"i":359,"k":"아홉 개","j":"9個","p":"","l":[9]},{"i":360,"k":"열 개","j":"10個","p":"","l":[9]},{"i":361,"k":"열한 개","j":"11個","p":"","l":[9]},{"i":362,"k":"열두 개","j":"12個","p":"","l":[9]},{"i":363,"k":"스물","j":"20、二十歳","p":"名","l":[9]},{"i":364,"k":"서른","j":"30、30歳","p":"名","l":[9]},{"i":365,"k":"마흔","j":"40、40歳","p":"名","l":[9]},{"i":366,"k":"쉰","j":"50、50歳","p":"名","l":[9]},{"i":367,"k":"예순","j":"60、60歳","p":"名","l":[9]},{"i":368,"k":"일흔","j":"70、70歳","p":"名","l":[9]},{"i":369,"k":"여든","j":"80、80歳","p":"名","l":[9]},{"i":370,"k":"아흔","j":"90、90歳","p":"名","l":[9]},{"i":371,"k":"시","j":"時","p":"名","l":[9]},{"i":372,"k":"개","j":"個","p":"名","l":[9]},{"i":373,"k":"사람 / 명","j":"人 / 名","p":"名","l":[9]},{"i":374,"k":"살","j":"歳","p":"名","l":[9]},{"i":375,"k":"번","j":"～回、～度 ／ ～番","p":"名","l":[9,10]},{"i":376,"k":"잔","j":"杯","p":"名","l":[9]},{"i":377,"k":"대","j":"台","p":"名","l":[9]},{"i":378,"k":"장","j":"枚","p":"名","l":[9]},{"i":379,"k":"권","j":"冊","p":"名","l":[9]},{"i":380,"k":"한","j":"1（助数詞前）","p":"","l":[9]},{"i":381,"k":"두","j":"2（助数詞前）","p":"","l":[9]},{"i":382,"k":"세","j":"3（助数詞前）","p":"","l":[9]},{"i":383,"k":"스무","j":"20（助数詞前）","p":"","l":[9]},{"i":384,"k":"이야기","j":"話","p":"名","l":[9]},{"i":385,"k":"사진","j":"写真","p":"名","l":[9]},{"i":386,"k":"를","j":"～を（母音）","p":"助","l":[9]},{"i":387,"k":"을","j":"～を（子音）","p":"助","l":[9]},{"i":388,"k":"주세요","j":"ください","p":"表現","l":[9]},{"i":389,"k":"비빔밥","j":"ビビンバ","p":"名","l":[9]},{"i":390,"k":"지하철을 탑니다","j":"地下鉄に乗ります","p":"表現","l":[9]},{"i":391,"k":"친구를 만납니다","j":"友達に会います","p":"表現","l":[9]},{"i":392,"k":"출구","j":"出口","p":"名","l":[9]},{"i":393,"k":"물","j":"水","p":"名","l":[9]},{"i":394,"k":"김밥","j":"キムパ","p":"名","l":[9]},{"i":395,"k":"점원","j":"店員","p":"名","l":[9]},{"i":396,"k":"전혀","j":"全然","p":"副","l":[9]},{"i":397,"k":"너무","j":"あまりにも、とても、～すぎる","p":"副","l":[9,12]},{"i":398,"k":"셀프","j":"セルフ","p":"名","l":[9]},{"i":399,"k":"밤","j":"夜","p":"名","l":[9]},{"i":400,"k":"새벽","j":"深夜・明け方","p":"名","l":[9]},{"i":401,"k":"몇 시","j":"何時","p":"","l":[9]},{"i":402,"k":"일어나다","j":"起きる","p":"動","l":[9,12,14,16]},{"i":403,"k":"배우다","j":"習う","p":"動","l":[9,14,16]},{"i":404,"k":"자다","j":"寝る","p":"動","l":[9]},{"i":405,"k":"리포트","j":"レポート","p":"名","l":[9,12]},{"i":406,"k":"작문","j":"作文","p":"名","l":[9]},{"i":407,"k":"에이 포","j":"A4","p":"名","l":[9]},{"i":408,"k":"아이스 아메리카노","j":"アイスアメリカーノ","p":"名","l":[9]},{"i":409,"k":"케이크","j":"ケーキ","p":"名","l":[9]},{"i":410,"k":"빵","j":"パン","p":"名","l":[9,17]},{"i":411,"k":"다음","j":"次、今度","p":"名","l":[9,10,14]},{"i":412,"k":"약","j":"薬","p":"名","l":[9]},{"i":413,"k":"일","j":"1（漢数詞） ／ ～日","p":"漢数詞・名","l":[10]},{"i":414,"k":"삼","j":"3","p":"漢数詞","l":[10]},{"i":415,"k":"사","j":"4","p":"漢数詞","l":[10]},{"i":416,"k":"오","j":"5","p":"漢数詞","l":[10]},{"i":417,"k":"육","j":"6","p":"漢数詞","l":[10]},{"i":418,"k":"칠","j":"7","p":"漢数詞","l":[10]},{"i":419,"k":"팔","j":"8","p":"漢数詞","l":[10]},{"i":420,"k":"구","j":"9","p":"漢数詞","l":[10]},{"i":421,"k":"십","j":"10","p":"漢数詞","l":[10]},{"i":422,"k":"백","j":"百","p":"漢数詞","l":[10]},{"i":423,"k":"천","j":"千","p":"漢数詞","l":[10]},{"i":424,"k":"만","j":"万 ／ 満～、～だけ","p":"漢数詞・名・助","l":[10]},{"i":425,"k":"영 / 공","j":"0","p":"漢数詞","l":[10]},{"i":426,"k":"년","j":"年","p":"名","l":[10]},{"i":427,"k":"월","j":"月","p":"名","l":[10]},{"i":428,"k":"분","j":"～分 ／ ～方（尊敬）","p":"名","l":[10,13]},{"i":429,"k":"원","j":"ウォン","p":"名","l":[10]},{"i":430,"k":"엔","j":"円","p":"名","l":[10]},{"i":431,"k":"층","j":"階","p":"名","l":[10]},{"i":432,"k":"교시","j":"時限","p":"名","l":[10,19]},{"i":433,"k":"년생","j":"年生まれ","p":"名","l":[10]},{"i":434,"k":"인분","j":"人前","p":"名","l":[10]},{"i":435,"k":"일월","j":"1月","p":"","l":[10]},{"i":436,"k":"이월","j":"2月","p":"","l":[10]},{"i":437,"k":"삼월","j":"3月","p":"","l":[10]},{"i":438,"k":"사월","j":"4月","p":"","l":[10]},{"i":439,"k":"오월","j":"5月","p":"","l":[10]},{"i":440,"k":"유월","j":"6月","p":"","l":[10]},{"i":441,"k":"칠월","j":"7月","p":"","l":[10]},{"i":442,"k":"팔월","j":"8月","p":"","l":[10]},{"i":443,"k":"구월","j":"9月","p":"","l":[10]},{"i":444,"k":"시월","j":"10月","p":"","l":[10]},{"i":445,"k":"십일월","j":"11月","p":"","l":[10]},{"i":446,"k":"십이월","j":"12月","p":"","l":[10]},{"i":447,"k":"부터","j":"～から","p":"助","l":[10]},{"i":448,"k":"까지","j":"～まで","p":"助","l":[10]},{"i":449,"k":"몇","j":"何（数詞）","p":"","l":[10]},{"i":450,"k":"무슨","j":"何（種類）","p":"","l":[10]},{"i":451,"k":"월요일","j":"月曜日","p":"名","l":[10]},{"i":452,"k":"화요일","j":"火曜日","p":"名","l":[10]},{"i":453,"k":"수요일","j":"水曜日","p":"名","l":[10]},{"i":454,"k":"목요일","j":"木曜日","p":"名","l":[10]},{"i":455,"k":"금요일","j":"金曜日","p":"名","l":[10]},{"i":456,"k":"토요일","j":"土曜日","p":"名","l":[10]},{"i":457,"k":"일요일","j":"日曜日","p":"名","l":[10]},{"i":458,"k":"평일","j":"平日","p":"名","l":[10]},{"i":459,"k":"어제","j":"昨日","p":"名","l":[10]},{"i":460,"k":"내일","j":"明日","p":"名","l":[10]},{"i":461,"k":"지난주","j":"先週","p":"名","l":[10,12]},{"i":462,"k":"이번 주","j":"今週","p":"名","l":[10]},{"i":463,"k":"다음 주","j":"来週","p":"名","l":[10]},{"i":464,"k":"지난달","j":"先月","p":"名","l":[10,12]},{"i":465,"k":"이번 달","j":"今月","p":"名","l":[10]},{"i":466,"k":"다음 달","j":"来月","p":"名","l":[10]},{"i":467,"k":"내년","j":"来年","p":"名","l":[10]},{"i":468,"k":"시험","j":"試験","p":"名","l":[10]},{"i":469,"k":"유학","j":"留学","p":"名","l":[10,20]},{"i":470,"k":"알바","j":"バイト","p":"名","l":[10]},{"i":471,"k":"아직","j":"まだ","p":"副","l":[10,12]},{"i":472,"k":"언제","j":"いつ","p":"名","l":[10]},{"i":473,"k":"그럼","j":"では","p":"副","l":[10,11]},{"i":474,"k":"며칠","j":"何日","p":"名","l":[10]},{"i":475,"k":"전","j":"前","p":"名","l":[10]},{"i":476,"k":"후","j":"後","p":"名","l":[10]},{"i":477,"k":"약을 먹다","j":"薬を飲む","p":"表現","l":[10]},{"i":478,"k":"샌드위치","j":"サンドイッチ","p":"名","l":[10]},{"i":479,"k":"전부","j":"全部","p":"名・副","l":[10]},{"i":480,"k":"건물","j":"建物","p":"名","l":[10]},{"i":481,"k":"운동","j":"運動","p":"名","l":[10]},{"i":482,"k":"과제","j":"課題","p":"名","l":[10]},{"i":483,"k":"살다","j":"住む","p":"動","l":[11,14,16,17,18,19,20,22]},{"i":484,"k":"건너다","j":"渡る","p":"動","l":[11,13]},{"i":485,"k":"보내다","j":"送る","p":"動","l":[11,13]},{"i":486,"k":"세다","j":"強い","p":"形","l":[11]},{"i":487,"k":"펴다","j":"開く","p":"動","l":[11]},{"i":488,"k":"되다","j":"なる、経つ","p":"動","l":[11,22]},{"i":489,"k":"말하다","j":"言う","p":"動","l":[11]},{"i":490,"k":"시원하다","j":"涼しい","p":"形","l":[11,21]},{"i":491,"k":"띄다","j":"（目に）つく","p":"動","l":[11]},{"i":492,"k":"받다","j":"もらう、受け取る","p":"動","l":[11,17,19,20,22]},{"i":493,"k":"웃다","j":"笑う","p":"動","l":[11,13,16,20,21]},{"i":494,"k":"내다","j":"出す","p":"動","l":[11]},{"i":495,"k":"바꾸다","j":"変える","p":"動","l":[11,13]},{"i":496,"k":"맛있다","j":"おいしい","p":"形","l":[11,16,17,19,20]},{"i":497,"k":"잘되다","j":"うまくいく","p":"動","l":[11,12]},{"i":498,"k":"괜찮다","j":"大丈夫だ","p":"形","l":[11,19]},{"i":499,"k":"서울","j":"ソウル","p":"名","l":[11,22]},{"i":500,"k":"택시","j":"タクシー","p":"名","l":[11]},{"i":501,"k":"비행기","j":"飛行機","p":"名","l":[11]},{"i":502,"k":"숟가락","j":"スプーン","p":"名","l":[11]},{"i":503,"k":"그래도","j":"それでも","p":"接続詞","l":[11]},{"i":504,"k":"그런데","j":"ところで","p":"接続詞","l":[11]},{"i":505,"k":"하지만","j":"だけど","p":"接続詞","l":[11]},{"i":506,"k":"공항","j":"空港","p":"名","l":[11]},{"i":507,"k":"나오다","j":"出て来る","p":"動","l":[11]},{"i":508,"k":"서울역","j":"ソウル駅","p":"名","l":[11,13]},{"i":509,"k":"이동하다","j":"移動する","p":"動","l":[11]},{"i":510,"k":"들어가다","j":"入る","p":"動","l":[11,18]},{"i":511,"k":"카드","j":"カード","p":"名","l":[11]},{"i":512,"k":"계산하다","j":"会計する","p":"動","l":[11,13]},{"i":513,"k":"일본말","j":"日本語","p":"名","l":[11]},{"i":514,"k":"손","j":"手","p":"名","l":[11]},{"i":515,"k":"가끔","j":"たまに","p":"副","l":[11]},{"i":516,"k":"쯤","j":"くらい、程","p":"接尾詞","l":[11,19]},{"i":517,"k":"다 같이","j":"皆（で）一緒に","p":"副","l":[11]},{"i":518,"k":"얼마나","j":"どれくらい","p":"副","l":[11]},{"i":519,"k":"한국말","j":"韓国語","p":"名","l":[11]},{"i":520,"k":"걸리다","j":"かかる","p":"動","l":[11]},{"i":521,"k":"일주일","j":"一週間","p":"名","l":[11]},{"i":522,"k":"쇼핑","j":"ショッピング","p":"名","l":[11]},{"i":523,"k":"걸어서","j":"歩いて","p":"","l":[11]},{"i":524,"k":"어떻게","j":"どのように","p":"副","l":[11,14]},{"i":525,"k":"요코하마","j":"横浜","p":"名","l":[11]},{"i":526,"k":"한 시간","j":"1時間","p":"","l":[11]},{"i":527,"k":"리무진 버스","j":"リムジンバス","p":"名","l":[11]},{"i":528,"k":"언제나","j":"いつも","p":"副","l":[11]},{"i":529,"k":"항상","j":"常に","p":"副","l":[11]},{"i":530,"k":"매일","j":"毎日","p":"副","l":[11]},{"i":531,"k":"거의 -지 않다","j":"ほとんど～しない","p":"","l":[11]},{"i":532,"k":"전혀 -지 않다","j":"全然～しない","p":"","l":[11]},{"i":533,"k":"신오쿠보","j":"新大久保","p":"名","l":[11]},{"i":534,"k":"태블릿","j":"タブレット","p":"名","l":[11]},{"i":535,"k":"늦다","j":"遅い、遅れる","p":"形","l":[12]},{"i":536,"k":"외우다","j":"覚える","p":"動","l":[12]},{"i":537,"k":"가르치다","j":"教える","p":"動","l":[12,13,16]},{"i":538,"k":"따뜻하다","j":"暖かい","p":"形","l":[12,16,17]},{"i":539,"k":"아주","j":"とても","p":"副","l":[12]},{"i":540,"k":"다시","j":"ふたたび、また","p":"副","l":[12]},{"i":541,"k":"좀","j":"少し","p":"副","l":[12]},{"i":542,"k":"잘","j":"よく","p":"副","l":[12]},{"i":543,"k":"더","j":"もっと、より","p":"副","l":[12,19]},{"i":544,"k":"다","j":"全部、全て","p":"副","l":[12]},{"i":545,"k":"같이","j":"一緒に","p":"副","l":[12]},{"i":546,"k":"제일","j":"一番","p":"副","l":[12]},{"i":547,"k":"가장","j":"最も","p":"副","l":[12,17]},{"i":548,"k":"별로","j":"あまり","p":"副","l":[12]},{"i":549,"k":"빨리","j":"速く","p":"副","l":[12]},{"i":550,"k":"천천히","j":"ゆっくり","p":"副","l":[12,19]},{"i":551,"k":"이제","j":"もう","p":"副","l":[12,20]},{"i":552,"k":"갑자기","j":"急に","p":"副","l":[12]},{"i":553,"k":"꼭","j":"必ず","p":"副","l":[12]},{"i":554,"k":"열심히","j":"一生懸命に","p":"副","l":[12,16]},{"i":555,"k":"또","j":"また","p":"副","l":[12]},{"i":556,"k":"리포트를 하다","j":"レポートをする","p":"","l":[12]},{"i":557,"k":"한국 드라마를 보다","j":"韓国ドラマを見る","p":"名","l":[12]},{"i":558,"k":"삼겹살","j":"サムギョプサル","p":"名","l":[12]},{"i":559,"k":"우리집","j":"我が家","p":"名","l":[12]},{"i":560,"k":"어때요?","j":"どうですか？","p":"","l":[12]},{"i":561,"k":"우아","j":"わぁ","p":"感嘆詞","l":[12]},{"i":562,"k":"동아리","j":"サークル","p":"名","l":[12]},{"i":563,"k":"친구 모임","j":"友達の集まり","p":"","l":[12]},{"i":564,"k":"오늘 아침","j":"今朝","p":"","l":[12]},{"i":565,"k":"어제 저녁","j":"昨日（昨夜）の夕食","p":"","l":[12]},{"i":566,"k":"어젯밤","j":"昨夜","p":"名","l":[12]},{"i":567,"k":"하세요","j":"なさいます（尊敬）","p":"","l":[13]},{"i":568,"k":"만드세요","j":"作られます（尊敬）","p":"","l":[13]},{"i":569,"k":"선배세요","j":"先輩でいらっしゃいます","p":"","l":[13]},{"i":570,"k":"선생님이세요","j":"先生でいらっしゃいます","p":"","l":[13]},{"i":571,"k":"공부하세요","j":"勉強してください（指示）","p":"","l":[13]},{"i":572,"k":"드시다","j":"召し上がる","p":"動","l":[13]},{"i":573,"k":"주무시다","j":"お休みになる","p":"動","l":[13]},{"i":574,"k":"계시다","j":"いらっしゃる","p":"","l":[13]},{"i":575,"k":"있으시다","j":"おありだ（物・時間がある）","p":"","l":[13]},{"i":576,"k":"안 계시다","j":"いらっしゃらない","p":"","l":[13]},{"i":577,"k":"없으시다","j":"おありでない","p":"","l":[13]},{"i":578,"k":"말씀","j":"お言葉","p":"名","l":[13]},{"i":579,"k":"댁","j":"お宅","p":"名","l":[13]},{"i":580,"k":"연세","j":"お歳","p":"名","l":[13]},{"i":581,"k":"검색하다","j":"検索する","p":"動","l":[13]},{"i":582,"k":"힘들다","j":"大変だ、つらい","p":"形・動","l":[13,16,17,19]},{"i":583,"k":"연락하다","j":"連絡する","p":"動","l":[13]},{"i":584,"k":"어서","j":"是非とも、ぜひ","p":"副","l":[13]},{"i":585,"k":"돌솥비빔밥","j":"石焼ビビンバ","p":"名","l":[13]},{"i":586,"k":"아침을 먹다","j":"朝食を食べる","p":"","l":[13]},{"i":587,"k":"저녁을 만들다","j":"夕食を作る","p":"","l":[13]},{"i":588,"k":"횡단보도","j":"横断歩道","p":"名","l":[13]},{"i":589,"k":"지하철 4호선","j":"地下鉄4号線","p":"","l":[13]},{"i":590,"k":"내리다","j":"降りる","p":"動","l":[13]},{"i":591,"k":"사이즈","j":"サイズ","p":"名","l":[13,18]},{"i":592,"k":"잠시만 기다리다","j":"少しだけ待つ","p":"","l":[13]},{"i":593,"k":"서점","j":"書店","p":"名","l":[13]},{"i":594,"k":"만드는 법","j":"作り方","p":"名","l":[13]},{"i":595,"k":"감기에 걸리다","j":"風邪をひく","p":"","l":[13]},{"i":596,"k":"할머니","j":"祖母","p":"名","l":[13]},{"i":597,"k":"찾다","j":"探す","p":"動","l":[13,17,19,20]},{"i":598,"k":"입다","j":"着る","p":"動","l":[14,16,17]},{"i":599,"k":"갈아입다","j":"着替える","p":"動","l":[14]},{"i":600,"k":"타다","j":"乗る","p":"動","l":[14]},{"i":601,"k":"신다","j":"履く","p":"動","l":[14]},{"i":602,"k":"갈아타다","j":"乗り換える","p":"動","l":[14]},{"i":603,"k":"비가 오다","j":"雨が降る","p":"","l":[14]},{"i":604,"k":"눈이 오다","j":"雪が降る","p":"","l":[14]},{"i":605,"k":"책을 빌리다","j":"本を借りる","p":"","l":[14]},{"i":606,"k":"푹 쉬다","j":"ゆっくり休む","p":"","l":[14]},{"i":607,"k":"바람이 불다","j":"風が吹く","p":"","l":[14]},{"i":608,"k":"문을 닫다","j":"ドアを閉める ／ 閉店する","p":"","l":[14,22]},{"i":609,"k":"기쁘다","j":"嬉しい","p":"形","l":[14]},{"i":610,"k":"예쁘다","j":"綺麗だ","p":"形","l":[14]},{"i":611,"k":"슬프다","j":"悲しい","p":"形","l":[14,17]},{"i":612,"k":"나쁘다","j":"悪い","p":"形","l":[14]},{"i":613,"k":"여러분","j":"皆さん","p":"名","l":[14]},{"i":614,"k":"생기다","j":"できる、起こる","p":"動","l":[14,20]},{"i":615,"k":"오랜만에","j":"久しぶりに","p":"副","l":[14]},{"i":616,"k":"맛집","j":"おいしい店","p":"名","l":[14]},{"i":617,"k":"예약","j":"予約","p":"名","l":[14]},{"i":618,"k":"우산을 쓰다","j":"傘をさす","p":"","l":[14]},{"i":619,"k":"소개하다","j":"紹介する","p":"動","l":[14]},{"i":620,"k":"한턱 내다","j":"おごる","p":"","l":[14]},{"i":621,"k":"잊다","j":"忘れる","p":"動","l":[14]},{"i":622,"k":"일찍 드시다","j":"早く召し上がる","p":"","l":[14]},{"i":623,"k":"시장","j":"市場","p":"名","l":[14,18]},{"i":624,"k":"장을 보다","j":"買い出しをする","p":"","l":[14]},{"i":625,"k":"세수하다","j":"顔を洗う","p":"動","l":[14]},{"i":626,"k":"문화","j":"文化","p":"名","l":[14]},{"i":627,"k":"방과 후","j":"放課後","p":"名","l":[14]},{"i":628,"k":"노래방","j":"カラオケボックス","p":"名","l":[14]},{"i":629,"k":"걷다","j":"歩く","p":"動","l":[15,16,17,18,19,20,21]},{"i":630,"k":"묻다","j":"尋ねる、埋める","p":"動","l":[15,16,17,18]},{"i":631,"k":"싣다","j":"載せる","p":"動","l":[15,17]},{"i":632,"k":"맵다","j":"辛い","p":"形","l":[15,16,18,19,22]},{"i":633,"k":"가깝다","j":"近い","p":"形","l":[15,16]},{"i":634,"k":"가볍다","j":"軽い","p":"形","l":[15,16]},{"i":635,"k":"고맙다","j":"ありがたい","p":"形","l":[15,16,18]},{"i":636,"k":"귀엽다","j":"かわいい","p":"形","l":[15,16,17]},{"i":637,"k":"덥다","j":"暑い","p":"形","l":[15,16,17,19,21,22]},{"i":638,"k":"뜨겁다","j":"熱い","p":"形","l":[15]},{"i":639,"k":"무겁다","j":"重い","p":"形","l":[15,16]},{"i":640,"k":"반갑다","j":"会えてうれしい","p":"形","l":[15,16]},{"i":641,"k":"쉽다","j":"簡単だ、易しい","p":"形","l":[15,16,21]},{"i":642,"k":"싱겁다","j":"味が薄い","p":"形","l":[15]},{"i":643,"k":"아름답다","j":"美しい","p":"形","l":[15,16]},{"i":644,"k":"아쉽다","j":"惜しい、物足りない","p":"形","l":[15]},{"i":645,"k":"어렵다","j":"難しい","p":"形","l":[15,16,18,19]},{"i":646,"k":"춥다","j":"寒い","p":"形","l":[15,16,19]},{"i":647,"k":"굽다","j":"焼く","p":"動","l":[15,17,19,20,21]},{"i":648,"k":"눕다","j":"横になる","p":"動","l":[15,17,20]},{"i":649,"k":"믿다","j":"信じる","p":"動","l":[15]},{"i":650,"k":"얻다","j":"得る","p":"動","l":[15]},{"i":651,"k":"들다","j":"持つ","p":"動","l":[15,18]},{"i":652,"k":"돕다","j":"助ける","p":"動","l":[15,16,18]},{"i":653,"k":"곱다","j":"美しい","p":"形","l":[15]},{"i":654,"k":"좁다","j":"狭い","p":"形","l":[15,16]},{"i":655,"k":"고르다","j":"選ぶ","p":"動","l":[15]},{"i":656,"k":"오르다","j":"上がる","p":"動","l":[15]},{"i":657,"k":"다르다","j":"異なる","p":"形","l":[15]},{"i":658,"k":"빠르다","j":"速い","p":"形","l":[15]},{"i":659,"k":"부르다","j":"歌う、呼ぶ","p":"動","l":[15]},{"i":660,"k":"흐르다","j":"流れる","p":"動","l":[15]},{"i":661,"k":"배부르다","j":"お腹がいっぱいだ","p":"形","l":[15]},{"i":662,"k":"따르다","j":"従う","p":"動","l":[15]},{"i":663,"k":"들르다","j":"立ち寄る","p":"動","l":[15]},{"i":664,"k":"치르다","j":"支払う","p":"動","l":[15]},{"i":665,"k":"길이 막히다","j":"道が混む","p":"","l":[15]},{"i":666,"k":"다리가 아프다","j":"脚が痛い","p":"","l":[15]},{"i":667,"k":"여행","j":"旅行","p":"名","l":[15]},{"i":668,"k":"날씨","j":"天気","p":"名","l":[15,18]},{"i":669,"k":"깜짝","j":"びっくり","p":"副","l":[15]},{"i":670,"k":"공연","j":"公演","p":"名","l":[15]},{"i":671,"k":"놀라다","j":"驚く","p":"動","l":[15]},{"i":672,"k":"멋있다","j":"格好いい、素敵だ","p":"形","l":[15,16]},{"i":673,"k":"맞다","j":"合っている","p":"動","l":[15,21]},{"i":674,"k":"팬","j":"ファン","p":"名","l":[15]},{"i":675,"k":"자막","j":"字幕","p":"名","l":[15]},{"i":676,"k":"친절하다","j":"親切だ","p":"形","l":[15,16]},{"i":677,"k":"등산","j":"登山","p":"名","l":[15,16]},{"i":678,"k":"기념","j":"記念","p":"名","l":[15]},{"i":679,"k":"마스코트","j":"マスコット","p":"名","l":[15]},{"i":680,"k":"재미있다","j":"おもしろい","p":"形","l":[16,19]},{"i":681,"k":"보이다","j":"見える","p":"動","l":[16]},{"i":682,"k":"팔다","j":"売る","p":"動","l":[16,18]},{"i":683,"k":"바라다","j":"望む","p":"動","l":[16]},{"i":684,"k":"수업이 없다","j":"授業がない","p":"","l":[16]},{"i":685,"k":"날","j":"日","p":"名","l":[16]},{"i":686,"k":"문제","j":"問題","p":"名","l":[16]},{"i":687,"k":"표정","j":"表情","p":"名","l":[16]},{"i":688,"k":"방법","j":"方法","p":"名","l":[16]},{"i":689,"k":"크다","j":"大きい","p":"形","l":[16,17]},{"i":690,"k":"바쁘다","j":"忙しい","p":"形","l":[16,17]},{"i":691,"k":"싸다","j":"安い","p":"形","l":[16,17,20]},{"i":692,"k":"비싸다","j":"［値段が］高い","p":"形","l":[16,17,19]},{"i":693,"k":"아프다","j":"痛い、具合が悪い","p":"形","l":[16,19]},{"i":694,"k":"깨끗하다","j":"清潔だ、きれいだ","p":"形","l":[16]},{"i":695,"k":"같다","j":"同じだ","p":"形","l":[16]},{"i":696,"k":"짧다","j":"短い","p":"形","l":[16,17]},{"i":697,"k":"어떤","j":"どんな","p":"連体形","l":[16]},{"i":698,"k":"계절","j":"季節","p":"名","l":[16]},{"i":699,"k":"바다","j":"海","p":"名","l":[16]},{"i":700,"k":"축제","j":"祭り、祝祭","p":"名","l":[16]},{"i":701,"k":"벚꽃놀이","j":"花見","p":"名","l":[16]},{"i":702,"k":"불꽃놀이","j":"花火","p":"名","l":[16]},{"i":703,"k":"여름축제","j":"夏祭り","p":"名","l":[16]},{"i":704,"k":"단풍놀이","j":"紅葉狩り","p":"名","l":[16]},{"i":705,"k":"눈싸움","j":"雪合戦","p":"名","l":[16]},{"i":706,"k":"눈축제","j":"雪まつり","p":"名","l":[16]},{"i":707,"k":"봄","j":"春","p":"名","l":[16]},{"i":708,"k":"여름","j":"夏","p":"名","l":[16]},{"i":709,"k":"가을","j":"秋","p":"名","l":[16]},{"i":710,"k":"겨울","j":"冬","p":"名","l":[16]},{"i":711,"k":"하늘색","j":"空色","p":"名","l":[16]},{"i":712,"k":"노란색","j":"黄色","p":"名","l":[16,21]},{"i":713,"k":"한식","j":"韓国食","p":"名","l":[16]},{"i":714,"k":"준비","j":"準備","p":"名","l":[16,20]},{"i":715,"k":"도시락","j":"お弁当","p":"名","l":[16,21]},{"i":716,"k":"그림 그리기","j":"絵を描くこと","p":"名","l":[16]},{"i":717,"k":"독서","j":"読書","p":"名","l":[16]},{"i":718,"k":"음악 감상","j":"音楽鑑賞","p":"名","l":[16]},{"i":719,"k":"영화 감상","j":"映画鑑賞","p":"名","l":[16]},{"i":720,"k":"요리","j":"料理","p":"名","l":[16]},{"i":721,"k":"걸다","j":"かける","p":"動","l":[17]},{"i":722,"k":"모으다","j":"集める","p":"動","l":[17]},{"i":723,"k":"찍다","j":"撮る","p":"動","l":[17]},{"i":724,"k":"시작하다","j":"始める、始まる","p":"動","l":[17,19,21,22]},{"i":725,"k":"것","j":"もの、こと","p":"名","l":[17,18]},{"i":726,"k":"헷갈리다","j":"混同する","p":"動","l":[17]},{"i":727,"k":"내용","j":"内容","p":"名","l":[17]},{"i":728,"k":"길","j":"道、街","p":"名","l":[17,21]},{"i":729,"k":"돈","j":"お金","p":"名","l":[17,22]},{"i":730,"k":"필요하다","j":"必要だ","p":"形","l":[17]},{"i":731,"k":"영화관","j":"映画館","p":"名","l":[17,22]},{"i":732,"k":"주인공","j":"主人公","p":"名","l":[17]},{"i":733,"k":"전쟁","j":"戦争","p":"名","l":[17]},{"i":734,"k":"헤어지다","j":"別れる","p":"動","l":[17]},{"i":735,"k":"마지막","j":"最後","p":"名","l":[17],"n":"例：마지막으로 만나다"},{"i":736,"k":"장면","j":"場面","p":"名","l":[17]},{"i":737,"k":"중에서","j":"～の中で","p":"","l":[17]},{"i":738,"k":"발라드","j":"バラード","p":"名","l":[17]},{"i":739,"k":"공포 영화","j":"ホラー映画","p":"名","l":[17]},{"i":740,"k":"마파두부","j":"麻婆豆腐","p":"名","l":[17]},{"i":741,"k":"추억","j":"思い出","p":"名","l":[17]},{"i":742,"k":"기억","j":"記憶","p":"名","l":[17]},{"i":743,"k":"사람","j":"人","p":"名","l":[18]},{"i":744,"k":"예정","j":"予定","p":"名","l":[18]},{"i":745,"k":"물건","j":"物、品","p":"名","l":[18]},{"i":746,"k":"카레","j":"カレー","p":"名","l":[18]},{"i":747,"k":"다음에","j":"次に、今度","p":"副","l":[18,22]},{"i":748,"k":"앞으로","j":"これから","p":"","l":[18]},{"i":749,"k":"장래에","j":"将来に","p":"","l":[18]},{"i":750,"k":"1년 후에","j":"1年後に","p":"","l":[18]},{"i":751,"k":"지키다","j":"守る","p":"動","l":[18,20]},{"i":752,"k":"못하다","j":"できない","p":"","l":[18]},{"i":753,"k":"알아듣다","j":"聞き取る","p":"動","l":[18]},{"i":754,"k":"짐","j":"荷物","p":"名","l":[18,20]},{"i":755,"k":"열다","j":"開ける","p":"動","l":[18,20,22]},{"i":756,"k":"생각하다","j":"考える","p":"動","l":[18]},{"i":757,"k":"발표","j":"発表","p":"名","l":[18]},{"i":758,"k":"팁","j":"コツ","p":"名","l":[18]},{"i":759,"k":"끝내다","j":"終わらせる","p":"動","l":[18]},{"i":760,"k":"슬라이드","j":"スライド","p":"名","l":[18]},{"i":761,"k":"페어","j":"ペア","p":"名","l":[18]},{"i":762,"k":"글자","j":"文字","p":"名","l":[18]},{"i":763,"k":"중요하다","j":"重要だ","p":"形","l":[18]},{"i":764,"k":"온천","j":"温泉","p":"名","l":[18,21]},{"i":765,"k":"해외여행","j":"海外旅行","p":"名","l":[18]},{"i":766,"k":"상비약","j":"常備薬","p":"名","l":[18]},{"i":767,"k":"여권","j":"パスポート","p":"名","l":[18]},{"i":768,"k":"가지고 가다","j":"持って行く","p":"動","l":[18]},{"i":769,"k":"토픽","j":"TOPIK","p":"名","l":[18]},{"i":770,"k":"피아노","j":"ピアノ","p":"名","l":[18]},{"i":771,"k":"기타","j":"ギター","p":"名","l":[18]},{"i":772,"k":"치다","j":"弾く、打つ","p":"動","l":[18]},{"i":773,"k":"스키","j":"スキー","p":"名","l":[18]},{"i":774,"k":"스케이트","j":"スケート","p":"名","l":[18]},{"i":775,"k":"스노우보드","j":"スノーボード","p":"名","l":[18]},{"i":776,"k":"테니스","j":"テニス","p":"名","l":[18]},{"i":777,"k":"볼링","j":"ボウリング","p":"名","l":[18]},{"i":778,"k":"배드민턴","j":"バドミントン","p":"名","l":[18]},{"i":779,"k":"자동차","j":"自動車","p":"名","l":[18]},{"i":780,"k":"굿즈","j":"グッズ","p":"名","l":[18]},{"i":781,"k":"연습하다","j":"練習する","p":"動","l":[19]},{"i":782,"k":"몸","j":"体","p":"名","l":[19]},{"i":783,"k":"오시다","j":"来られる","p":"動","l":[19]},{"i":784,"k":"식사하다","j":"食事する","p":"動","l":[19]},{"i":785,"k":"보시다","j":"ご覧になる","p":"動","l":[19]},{"i":786,"k":"읽으시다","j":"お読みになる","p":"動","l":[19]},{"i":787,"k":"도착하다","j":"到着する","p":"動","l":[19]},{"i":788,"k":"잘하다","j":"うまくできる","p":"動","l":[19]},{"i":789,"k":"슬슬","j":"そろそろ","p":"副","l":[19]},{"i":790,"k":"출발하다","j":"出発する","p":"動","l":[19]},{"i":791,"k":"끝나다","j":"終わる","p":"動","l":[19]},{"i":792,"k":"덕분에","j":"お陰様で","p":"","l":[19]},{"i":793,"k":"양념","j":"味付け","p":"名","l":[19]},{"i":794,"k":"나가다","j":"出る、出掛ける","p":"動","l":[19]},{"i":795,"k":"문자","j":"文字、テキスト","p":"名","l":[19]},{"i":796,"k":"인기","j":"人気","p":"名","l":[19]},{"i":797,"k":"잘생기다","j":"ハンサムだ、格好いい","p":"","l":[19]},{"i":798,"k":"말이 많다","j":"おしゃべりだ","p":"","l":[19]},{"i":799,"k":"공원","j":"公園","p":"名","l":[19,21]},{"i":800,"k":"산책하다","j":"散歩する","p":"動","l":[19]},{"i":801,"k":"행복하다","j":"幸せだ","p":"","l":[19]},{"i":802,"k":"시내","j":"中心街","p":"名","l":[19]},{"i":803,"k":"설명하다","j":"説明する","p":"動","l":[20]},{"i":804,"k":"요리하다","j":"料理する","p":"動","l":[20]},{"i":805,"k":"이야기하다","j":"話す","p":"動","l":[20]},{"i":806,"k":"잠들다","j":"寝入る","p":"","l":[20]},{"i":807,"k":"응원하다","j":"応援する","p":"","l":[20]},{"i":808,"k":"창문","j":"窓","p":"","l":[20]},{"i":809,"k":"순두부","j":"スンドゥブ","p":"","l":[20]},{"i":810,"k":"길다","j":"長い","p":"","l":[20]},{"i":811,"k":"오래","j":"長い間","p":"副","l":[20]},{"i":812,"k":"잘하시다","j":"お上手だ","p":"","l":[20]},{"i":813,"k":"학기","j":"学期","p":"名","l":[20]},{"i":814,"k":"부딪치다","j":"ぶつかる","p":"動","l":[20]},{"i":815,"k":"밖에","j":"～しか","p":"助","l":[20]},{"i":816,"k":"조심하다","j":"気を付ける","p":"動","l":[20]},{"i":817,"k":"남다","j":"残る","p":"動","l":[20]},{"i":818,"k":"다치다","j":"怪我する","p":"動","l":[20]},{"i":819,"k":"지내다","j":"過ごす","p":"動","l":[20]},{"i":820,"k":"다행이다","j":"幸いだ","p":"形","l":[20]},{"i":821,"k":"벌써","j":"もう、早くも、すでに","p":"副","l":[20]},{"i":822,"k":"방금","j":"ただいま、今","p":"副","l":[20]},{"i":823,"k":"금방","j":"今さっき、たった今","p":"副","l":[20]},{"i":824,"k":"죄송하다","j":"申し訳ない","p":"形","l":[20]},{"i":825,"k":"배가 부르다","j":"お腹がいっぱいだ","p":"形","l":[20]},{"i":826,"k":"사고","j":"事故","p":"名","l":[20]},{"i":827,"k":"문자를 하다","j":"テキストのやり取りをする、メッセージを送る","p":"動","l":[20]},{"i":828,"k":"잠이 오다","j":"眠い","p":"表現","l":[20]},{"i":829,"k":"술집","j":"飲み屋","p":"名","l":[20]},{"i":830,"k":"가족","j":"家族","p":"名","l":[20,21]},{"i":831,"k":"라디오","j":"ラジオ","p":"名","l":[20]},{"i":832,"k":"청소","j":"掃除","p":"名","l":[20]},{"i":833,"k":"빨래","j":"洗濯","p":"名","l":[20]},{"i":834,"k":"신문","j":"新聞","p":"名","l":[20]},{"i":835,"k":"주고 받다","j":"やり取りする","p":"動","l":[20]},{"i":836,"k":"결혼하다","j":"結婚する","p":"動","l":[20]},{"i":837,"k":"공휴일","j":"祝日","p":"名","l":[20]},{"i":838,"k":"작다","j":"小さい","p":"形","l":[21]},{"i":839,"k":"안되다","j":"だめだ","p":"","l":[21]},{"i":840,"k":"마음에 들다","j":"気に入る","p":"慣用句","l":[21]},{"i":841,"k":"말씀하시다","j":"おっしゃる","p":"","l":[21]},{"i":842,"k":"연락처","j":"連絡先","p":"名","l":[21]},{"i":843,"k":"가르쳐 주시다","j":"教えてくださる","p":"","l":[21]},{"i":844,"k":"기회가 생기다","j":"チャンスができる","p":"慣用句","l":[21]},{"i":845,"k":"연락을 주다","j":"連絡をくれる","p":"","l":[21]},{"i":846,"k":"바쁘시다","j":"お忙しい","p":"形","l":[21]},{"i":847,"k":"짓다","j":"建てる、作る、つける","p":"動","l":[21]},{"i":848,"k":"낫다","j":"治る ／ ましだ","p":"動・形","l":[21,22]},{"i":849,"k":"붓다","j":"注ぐ","p":"動","l":[21]},{"i":850,"k":"잇다","j":"つなぐ","p":"動","l":[21]},{"i":851,"k":"이렇다","j":"こうだ","p":"形","l":[21]},{"i":852,"k":"저렇다","j":"ああだ","p":"形","l":[21]},{"i":853,"k":"어떻다","j":"どうだ","p":"形","l":[21]},{"i":854,"k":"까맣다","j":"黒い","p":"形","l":[21]},{"i":855,"k":"하얗다","j":"白い","p":"形","l":[21]},{"i":856,"k":"빨갛다","j":"赤い","p":"形","l":[21]},{"i":857,"k":"파랗다","j":"青い","p":"形","l":[21]},{"i":858,"k":"노랗다","j":"黄色い","p":"形","l":[21]},{"i":859,"k":"동그랗다","j":"丸い","p":"形","l":[21]},{"i":860,"k":"벗다","j":"脱ぐ","p":"動","l":[21]},{"i":861,"k":"빼앗다","j":"奪う","p":"動","l":[21]},{"i":862,"k":"씻다","j":"洗う","p":"動","l":[21]},{"i":863,"k":"낳다","j":"生む","p":"動","l":[21]},{"i":864,"k":"넣다","j":"入れる","p":"動","l":[21]},{"i":865,"k":"놓다","j":"置く","p":"動","l":[21]},{"i":866,"k":"집을 짓다","j":"家を建てる","p":"慣用句","l":[21]},{"i":867,"k":"이름을 짓다","j":"名前を付ける","p":"慣用句","l":[21]},{"i":868,"k":"밥을 짓다","j":"ご飯を炊く","p":"慣用句","l":[21]},{"i":869,"k":"약을 짓다","j":"薬を調合する","p":"慣用句","l":[21]},{"i":870,"k":"긋다","j":"線を引く","p":"動","l":[21]},{"i":871,"k":"비교하다","j":"比べる","p":"動","l":[21]},{"i":872,"k":"패딩","j":"ダウンコート","p":"名","l":[21]},{"i":873,"k":"추위","j":"寒さ","p":"名","l":[21]},{"i":874,"k":"이해하다","j":"わかる、理解する","p":"動","l":[21]},{"i":875,"k":"갔다 오다","j":"行って来る","p":"","l":[21]},{"i":876,"k":"좋겠다","j":"～たらいいな","p":"","l":[21]},{"i":877,"k":"초대하다","j":"招待する","p":"動","l":[21]},{"i":878,"k":"부모님","j":"両親","p":"名","l":[21]},{"i":879,"k":"에어컨","j":"エアコン","p":"名","l":[21]},{"i":880,"k":"휴가","j":"休暇","p":"名","l":[21]},{"i":881,"k":"참다","j":"我慢する","p":"動","l":[21]},{"i":882,"k":"모임","j":"集まり","p":"名","l":[21]},{"i":883,"k":"까만색","j":"黒色","p":"名","l":[21]},{"i":884,"k":"하얀색","j":"白色","p":"名","l":[21]},{"i":885,"k":"빨간색","j":"赤色","p":"名","l":[21]},{"i":886,"k":"파란색","j":"青色","p":"名","l":[21]},{"i":887,"k":"키가 크다","j":"背が高い","p":"","l":[22]},{"i":888,"k":"생각","j":"思う、考え、思い","p":"名","l":[22]},{"i":889,"k":"올해 여름","j":"今年の夏","p":"","l":[22]},{"i":890,"k":"더 낫다","j":"もっとましだ","p":"","l":[22]},{"i":891,"k":"사 먹는 것","j":"買って食べること","p":"","l":[22]},{"i":892,"k":"해 먹는 것","j":"作って食べること","p":"","l":[22]},{"i":893,"k":"한 번 만나다","j":"一度会う","p":"","l":[22]},{"i":894,"k":"직접","j":"直接","p":"名","l":[22]},{"i":895,"k":"공부","j":"勉強","p":"名","l":[22]},{"i":896,"k":"오래되다","j":"長くなる、古くなる","p":"","l":[22]},{"i":897,"k":"몇 달","j":"何ヶ月か","p":"","l":[22]},{"i":898,"k":"얼마 안 되다","j":"あまり経っていない","p":"表現","l":[22]},{"i":899,"k":"꽤","j":"かなり","p":"副","l":[22]},{"i":900,"k":"덜","j":"控えめに","p":"副","l":[22]},{"i":901,"k":"맵게","j":"辛く","p":"副","l":[22]},{"i":902,"k":"목","j":"のど、首","p":"名","l":[22]},{"i":903,"k":"-(이)나","j":"～とか","p":"","l":[22]},{"i":904,"k":"이서","j":"～で（人数）","p":"","l":[22]},{"i":905,"k":"셋이서","j":"3人で","p":"副","l":[22]},{"i":906,"k":"혼자서","j":"ひとり（で）","p":"副","l":[22]},{"i":907,"k":"둘이서","j":"2人で","p":"副","l":[22]},{"i":908,"k":"유명하다","j":"有名だ","p":"形","l":[22]},{"i":909,"k":"병원","j":"病院","p":"名","l":[22]},{"i":910,"k":"입원하다","j":"入院する","p":"動","l":[22]},{"i":911,"k":"가수","j":"歌手","p":"名","l":[22]},{"i":912,"k":"가게","j":"店","p":"名","l":[22]},{"i":913,"k":"사인","j":"サイン","p":"名","l":[22]}];
+const RAW_ROWS = 1014;
+</script>
+<script>
+"use strict";
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+function h(tag, attrs, ...kids) {
+  const el = document.createElement(tag);
+  if (attrs) for (const k in attrs) {
+    const v = attrs[k];
+    if (v == null || v === false) continue;
+    if (k === "class") el.className = v;
+    else if (k === "html") el.innerHTML = v;
+    else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+    else if (k === "style") el.style.cssText = v;
+    else el.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) el.append(c.nodeType ? c : String(c));
+  return el;
+}
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.random() * (i + 1) | 0; [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const sample = (a, n) => shuffle(a).slice(0, n);
+const MIN = 60e3, HOUR = 3600e3, DAY = 864e5;
+function dayIndex(t = Date.now()) { const d = new Date(t - 4 * HOUR); return Math.round(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY); }
+function dayStart(idx) { const d = new Date(idx * DAY); return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 4).getTime(); }
+function dayKey(idx = dayIndex()) { const d = new Date(idx * DAY); return d.toISOString().slice(0, 10); }
+const WD = ["日", "月", "火", "水", "木", "金", "土"];
+function fmtDur(ms) {
+  const m = Math.max(1, Math.round(ms / MIN));
+  if (m < 60) return m + "分";
+  const hr = Math.round(ms / HOUR);
+  if (hr < 24) return hr + "時間";
+  const d = Math.round(ms / DAY);
+  if (d < 31) return d + "日";
+  if (d < 365) return (Math.round(d / 3) / 10).toString() + "か月";
+  return (Math.round(d / 36.5) / 10).toString() + "年";
+}
+function fmtDue(due) {
+  const di = dayIndex(due) - dayIndex();
+  if (due <= Date.now()) return "今";
+  if (di <= 0) return fmtDur(due - Date.now()) + "後";
+  if (di === 1) return "明日";
+  const d = new Date(due); return `${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）`;
+}
+const ICON = {
+  star: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.2l2.6 5.5 6 .8-4.4 4.2 1.1 6-5.3-2.9-5.3 2.9 1.1-6L3.4 9.5l6-.8z"/></svg>',
+  spk: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 010 6M18 6.5a7.5 7.5 0 010 11"/></svg>',
+  undo: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 7L4.5 11.5 9 16"/><path d="M5 11.5h9a5 5 0 010 10h-2"/></svg>',
+  chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5l7 7-7 7"/></svg>',
+  shuf: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h3.5c4 0 5 10 9 10H20M4 17h3.5c1.6 0 2.7-1.6 3.6-3.5M13 10.5c.9-1.9 2-3.5 3.5-3.5H20"/><path d="M17.5 4.5L20 7l-2.5 2.5M17.5 14.5L20 17l-2.5 2.5"/></svg>'
+};
+function toast(msg) {
+  const t = h("div", { class: "toast", role: "status" }, msg);
+  document.body.append(t); setTimeout(() => t.remove(), 2200);
+}
+
+/* ---------- words ---------- */
+const W = WORDS.map((w, i) => ({ ...w, idx: i, pos0: (w.p || "").split("・")[0] }));
+const LESSONS = [...new Set(W.flatMap(w => w.l))].sort((a, b) => a - b);
+function lessonLabel(w) { return w.l.length ? "第" + w.l.join("・") + "課" : ""; }
+function koAlts(ko) {
+  const s = new Set([ko]);
+  ko.split(/\s*\/\s*/).forEach(p => { s.add(p); s.add(p.replace(/\(.*?\)/g, "")); (p.match(/\((.*?)\)/g) || []).forEach(m => s.add(m.slice(1, -1))); });
+  return [...s].map(normKo).filter(Boolean);
+}
+function normKo(s) { return s.normalize("NFC").replace(/[\s?!.,。、？！~～\-()（）'"…]/g, ""); }
+
+/* ---------- storage ---------- */
+const LS_KEY = "hangul-tango-v1";
+const DEF_PREFS = { dir: "ko", newPerDay: 20, tts: true, rate: 0.85, lessons: [], starOnly: false, order: "lesson", u: 0 };
+let P = { v: 1, cards: {}, star: {}, days: {}, newLog: { d: "", n: 0 }, prefs: { ...DEF_PREFS }, best: {}, tipHidden: false };
+function loadLocal() {
+  try { const raw = localStorage.getItem(LS_KEY); if (raw) mergeInto(JSON.parse(raw), true); } catch (e) {}
+}
+function mergeInto(R, trustAll) {
+  if (!R || typeof R !== "object") return;
+  for (const k in R.cards || {}) { const a = P.cards[k], b = R.cards[k]; if (b && (!a || (b.u || 0) > (a.u || 0))) P.cards[k] = b; }
+  for (const k in R.star || {}) { const a = P.star[k], b = R.star[k]; if (b && (!a || (b.u || 0) > (a.u || 0))) P.star[k] = b; }
+  for (const k in R.days || {}) P.days[k] = Math.max(P.days[k] || 0, R.days[k] || 0);
+  if (R.newLog && R.newLog.d) { if (R.newLog.d > P.newLog.d) P.newLog = { ...R.newLog }; else if (R.newLog.d === P.newLog.d) P.newLog.n = Math.max(P.newLog.n, R.newLog.n); }
+  if (R.prefs && (trustAll || (R.prefs.u || 0) > (P.prefs.u || 0))) P.prefs = { ...DEF_PREFS, ...R.prefs };
+  for (const k in R.best || {}) P.best[k] = P.best[k] ? Math.min(P.best[k], R.best[k]) : R.best[k];
+  if (R.tipHidden) P.tipHidden = true;
+}
+let saveT = 0;
+function save() {
+  clearTimeout(saveT);
+  saveT = setTimeout(() => { try { localStorage.setItem(LS_KEY, JSON.stringify(P)); } catch (e) {} cloudPush(); }, 250);
+}
+function flushSave() { clearTimeout(saveT); try { localStorage.setItem(LS_KEY, JSON.stringify(P)); } catch (e) {} cloudPush(true); }
+function setPref(k, v) { P.prefs[k] = v; P.prefs.u = Date.now(); save(); }
+
+/* cloud sync (claude.ai artifact db, per-viewer private doc) */
+const cloud = { ref: null, state: "local", busy: null, dirty: false, t: 0 };
+async function cloudInit() {
+  if (!window.claude || !window.claude.use) return;
+  try {
+    const [db, user] = await Promise.all([window.claude.use("db"), window.claude.use("user")]);
+    if (!db || !user) return;
+    const id = await user.id(); if (!id) return;
+    cloud.ref = db.doc("data/users/" + id + "/progress");
+    await cloudPull();
+    cloud.state = "synced"; cloud.dirty = true; cloudPush(true);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") cloudPull().then(rerender); else flushSave(); });
+  } catch (e) { cloud.ref = null; cloud.state = "local"; }
+  rerender();
+}
+async function cloudPull() {
+  if (!cloud.ref) return;
+  try {
+    const snap = await cloud.ref.get();
+    if (snap.exists) { const d = snap.data(); if (d && d.blob) { mergeInto(JSON.parse(d.blob), false); try { localStorage.setItem(LS_KEY, JSON.stringify(P)); } catch (e) {} } }
+  } catch (e) {}
+}
+function cloudPush(now) {
+  if (!cloud.ref) return;
+  cloud.dirty = true;
+  clearTimeout(cloud.t);
+  cloud.t = setTimeout(async () => {
+    if (cloud.busy) { await cloud.busy.catch(() => {}); }
+    if (!cloud.dirty || !cloud.ref) return;
+    cloud.dirty = false;
+    cloud.busy = cloud.ref.set({ blob: JSON.stringify(P), u: Date.now() })
+      .then(() => { cloud.state = "synced"; })
+      .catch(e => { if (e && (e.code === "invalid_argument" || e.code === "revoked" || e.code === "not_granted")) { cloud.ref = null; cloud.state = "local"; } else { cloud.dirty = true; cloud.state = "pending"; } });
+  }, now ? 0 : 3000);
+}
+window.addEventListener("pagehide", flushSave);
+
+/* ---------- SRS ---------- */
+const STEPS = [1, 10];      // minutes, learning steps for new cards
+const RELEARN = 10;         // minutes
+const GRAD = 1, EASY_IV = 4; // days
+function cardOf(w) { return P.cards[w.k]; }
+function isNew(w) { const c = cardOf(w); return !c || c.s === 0; }
+function schedule(c0, g, now = Date.now(), fuzz = true) {
+  const c = Object.assign({ s: 0, st: 0, iv: 0, ef: 2.5, r: 0, l: 0, due: now }, c0 || {});
+  const dueDays = n => dayStart(dayIndex(now) + n);
+  if (c.s === 0 || c.s === 1) {
+    if (g === 1) { c.s = 1; c.st = 0; c.due = now + STEPS[0] * MIN; }
+    else if (g === 2) { c.s = 1; c.due = now + (c.st === 0 ? 6 : STEPS[c.st]) * MIN; }
+    else if (g === 3) { if (c.st + 1 < STEPS.length) { c.s = 1; c.st++; c.due = now + STEPS[c.st] * MIN; } else { c.s = 2; c.iv = GRAD; c.due = dueDays(GRAD); } }
+    else { c.s = 2; c.iv = EASY_IV; c.due = dueDays(EASY_IV); }
+  } else if (c.s === 3) {
+    if (g <= 2) { c.due = now + RELEARN * MIN; }
+    else { c.s = 2; if (g === 4) c.iv += 1; c.due = dueDays(c.iv); }
+  } else {
+    if (g === 1) { c.l++; c.ef = Math.max(1.3, c.ef - 0.2); c.iv = Math.max(1, Math.round(c.iv * 0.5)); c.s = 3; c.st = 0; c.due = now + RELEARN * MIN; }
+    else {
+      if (g === 2) { c.ef = Math.max(1.3, c.ef - 0.15); c.iv = Math.max(c.iv + 1, Math.round(c.iv * 1.2)); }
+      else if (g === 3) { c.iv = Math.max(c.iv + 1, Math.round(c.iv * c.ef)); }
+      else { const good = Math.max(c.iv + 1, Math.round(c.iv * c.ef)); c.ef += 0.15; c.iv = Math.max(good + 1, Math.round(c.iv * c.ef * 1.3)); }
+      if (fuzz && c.iv >= 4) c.iv = Math.max(c.iv - 1, Math.round(c.iv * (0.95 + Math.random() * 0.1)));
+      c.iv = Math.min(c.iv, 3650);
+      c.due = dueDays(c.iv);
+    }
+  }
+  c.r++; c.u = now;
+  return c;
+}
+function statusOf(w) {
+  const c = cardOf(w);
+  if (!c || c.s === 0) return { k: "new", t: "未学習", cls: "st-new" };
+  if (c.s === 1 || c.s === 3) return { k: "lrn", t: "学習中", cls: "st-lrn" };
+  if (c.iv >= 21) return { k: "mst", t: "定着", cls: "st-mst" };
+  return { k: "rev", t: "復習中", cls: "st-rev" };
+}
+function newToday() { return P.newLog.d === dayKey() ? P.newLog.n : 0; }
+function pool() {
+  const ls = P.prefs.lessons;
+  return W.filter(w => (!ls.length || w.l.some(x => ls.includes(x))) && (!P.prefs.starOnly || isStar(w)));
+}
+function newQueue() {
+  const left = Math.max(0, P.prefs.newPerDay - newToday());
+  let list = pool().filter(isNew);
+  if (P.prefs.order === "random") list = shuffle(list);
+  else list.sort((a, b) => (a.l[0] || 99) - (b.l[0] || 99) || a.idx - b.idx);
+  return list.slice(0, left);
+}
+function dueCounts(now = Date.now()) {
+  let rev = 0, lrn = 0;
+  for (const w of W) { const c = cardOf(w); if (!c) continue; if (c.s === 2 && c.due <= now) rev++; else if ((c.s === 1 || c.s === 3) && c.due <= now + 20 * MIN) lrn++; }
+  return { rev, lrn, neu: newQueue().length };
+}
+function logActivity(n = 1) { const k = dayKey(); P.days[k] = (P.days[k] || 0) + n; }
+function streak() {
+  let i = dayIndex(), n = 0;
+  if (!P.days[dayKey(i)]) i--;
+  while (P.days[dayKey(i)]) { n++; i--; }
+  return n;
+}
+function isStar(w) { const s = P.star[w.k]; return !!(s && s.on); }
+function toggleStar(w, on) { P.star[w.k] = { on: on ?? !isStar(w) ? 1 : 0, u: Date.now() }; save(); return isStar(w); }
+function starBtn(w, onChange) {
+  const b = h("button", { class: "star", "aria-pressed": String(isStar(w)), "aria-label": "スター", html: ICON.star });
+  b.addEventListener("click", e => { e.stopPropagation(); const v = toggleStar(w); b.setAttribute("aria-pressed", String(v)); onChange && onChange(v); });
+  return b;
+}
+
+/* ---------- speech ---------- */
+let koVoice = null;
+function pickVoice() { try { const vs = speechSynthesis.getVoices(); koVoice = vs.find(v => /ko[-_]KR/i.test(v.lang) && /Yuna|유나|Sora|Google/i.test(v.name)) || vs.find(v => /^ko/i.test(v.lang)) || null; } catch (e) {} }
+if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+function speak(text) {
+  if (!("speechSynthesis" in window)) return;
+  try {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.replace(/\.\.\.|…/g, " ").replace(/[()（）/]/g, " "));
+    u.lang = "ko-KR"; u.rate = P.prefs.rate; if (koVoice) u.voice = koVoice;
+    speechSynthesis.speak(u);
+  } catch (e) {}
+}
+function spkBtn(text) {
+  const b = h("button", { class: "icon-btn", "aria-label": "発音を聞く", html: ICON.spk });
+  b.addEventListener("click", e => { e.stopPropagation(); speak(text); });
+  return b;
+}
+
+/* ---------- distractors ---------- */
+function options(w, field, n = 4) {
+  const used = new Set([w[field]]), out = [w];
+  const pl = pool();
+  const tiers = [pl.filter(x => x.pos0 === w.pos0), pl, W.filter(x => x.pos0 === w.pos0), W];
+  for (const t of tiers) {
+    for (const x of shuffle(t)) {
+      if (out.length >= n) break;
+      if (used.has(x[field]) || x.k === w.k || x.j === w.j) continue;
+      used.add(x[field]); out.push(x);
+    }
+    if (out.length >= n) break;
+  }
+  return shuffle(out);
+}
+function pickDir() { const d = P.prefs.dir; return d === "mix" ? (Math.random() < .5 ? "ko" : "ja") : d; }
+
+/* ---------- tabs ---------- */
+let tab = "home";
+function showTab(t) {
+  tab = t;
+  document.querySelectorAll(".tab").forEach(b => { if (b.dataset.tab === t) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  $("#v-home").hidden = t !== "home"; $("#v-list").hidden = t !== "list"; $("#v-set").hidden = t !== "set";
+  $("#main").scrollTop = 0;
+  rerender();
+}
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => showTab(b.dataset.tab)));
+function rerender() {
+  if (!$("#study").hidden) return;
+  if (tab === "home") renderHome(); else if (tab === "list") renderList(); else renderSettings();
+}
+
+/* ---------- home ---------- */
+function renderHome() {
+  const v = $("#v-home"); v.replaceChildren();
+  const now = new Date(), dc = dueCounts(), st = streak();
+  const total = dc.rev + dc.lrn + dc.neu;
+  const startBtn = h("button", { class: "btn btn-p btn-block", disabled: total === 0, onclick: startReview },
+    total ? "今日の復習を始める" : "今日の分は終わりました");
+  const nextDue = W.map(cardOf).filter(c => c && c.s >= 1 && c.due > Date.now()).sort((a, b) => a.due - b.due)[0];
+  v.append(h("div", { class: "today" },
+    h("div", { class: "today-head" },
+      h("h1", null, "今日の復習"),
+      h("p", { class: "eyebrow num" }, `${now.getMonth() + 1}月${now.getDate()}日（${WD[now.getDay()]}）`)),
+    h("div", { class: "counts" },
+      h("div", { class: "c-rev" }, h("b", null, dc.rev + dc.lrn), h("span", null, "復習する単語")),
+      h("div", null, h("b", null, dc.neu), h("span", null, "新しい単語")),
+      h("div", null, h("b", null, st), h("span", null, "日連続"))),
+    startBtn,
+    !total && nextDue ? h("p", { class: "sub", style: "margin:-6px 0 0" }, `次の復習：${fmtDue(nextDue.due)}`) : null,
+  ));
+
+  // tip for home screen
+  const standalone = window.navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+  if (!standalone && !P.tipHidden && /iPhone|iPad|iPod/.test(navigator.userAgent)) {
+    v.append(h("div", { class: "tip" },
+      h("p", null, "Safari の共有ボタン → 「ホーム画面に追加」でアプリのように使えます。"),
+      h("button", { class: "link", onclick: () => { P.tipHidden = true; save(); renderHome(); } }, "閉じる")));
+  }
+
+  // forecast
+  const today = dayIndex(), fc = Array(7).fill(0), nowMs = Date.now();
+  for (const w of W) { const c = cardOf(w); if (!c || c.s === 0) continue; const di = Math.max(0, dayIndex(c.due) - today); if (c.due <= nowMs || di === 0) fc[0]++; else if (di < 7) fc[di]++; }
+  const mx = Math.max(4, ...fc);
+  v.append(h("div", null, h("h2", null, "これからの復習"),
+    h("div", { class: "fc", role: "img", "aria-label": "7日間の復習予定: " + fc.join(", ") },
+      fc.map((n, i) => { const d = new Date(dayStart(today + i)); return h("div", { class: "fc-col" + (i === 0 ? " today" : "") },
+        h("span", { class: "fc-n" }, n || ""), h("i", { class: "fc-bar", style: `height:${Math.round(n / mx * 64)}px` }),
+        h("span", { class: "fc-d" }, i === 0 ? "今日" : WD[d.getDay()])); }))));
+
+  // progress
+  const cnt = { new: 0, lrn: 0, rev: 0, mst: 0 }; W.forEach(w => cnt[statusOf(w).k]++);
+  const pc = n => (n / W.length * 100) + "%";
+  v.append(h("div", null, h("h2", null, `進み具合 ・ 全${W.length}語`),
+    h("div", { class: "stack" }, h("i", { style: `width:${pc(cnt.mst)};background:var(--good)` }), h("i", { style: `width:${pc(cnt.rev)};background:var(--accent)` }), h("i", { style: `width:${pc(cnt.lrn)};background:var(--hard)` })),
+    h("div", { class: "legend num" },
+      h("span", null, h("i", { class: "dot", style: "background:var(--good)" }), `定着 ${cnt.mst}`),
+      h("span", null, h("i", { class: "dot", style: "background:var(--accent)" }), `復習中 ${cnt.rev}`),
+      h("span", null, h("i", { class: "dot", style: "background:var(--hard)" }), `学習中 ${cnt.lrn}`),
+      h("span", null, h("i", { class: "dot", style: "background:var(--sunk);border:1px solid var(--line)" }), `未学習 ${cnt.new}`))));
+
+  // range
+  const ls = P.prefs.lessons, pl = pool();
+  const chips = h("div", { class: "chips" },
+    h("button", { class: "chip", "aria-pressed": String(!ls.length), onclick: () => { setPref("lessons", []); renderHome(); } }, "全課"),
+    LESSONS.map(n => h("button", { class: "chip", "aria-pressed": String(ls.includes(n)), "aria-label": `第${n}課`,
+      onclick: () => { const s = new Set(P.prefs.lessons); s.has(n) ? s.delete(n) : s.add(n); setPref("lessons", [...s].sort((a, b) => a - b)); renderHome(); } }, n)));
+  const starCount = W.filter(isStar).length;
+  v.append(h("div", null, h("h2", null, "出題範囲（課）"), chips,
+    h("div", { class: "range-bar" },
+      h("button", { class: "toggle", role: "switch", "aria-checked": String(P.prefs.starOnly), onclick: () => { setPref("starOnly", !P.prefs.starOnly); renderHome(); } },
+        h("span", { class: "sw" }), `★ を付けた単語だけ（${starCount}）`),
+      h("span", { class: "sub num" }, `${pl.length}語`)),
+    h("p", { class: "sub", style: "margin:8px 0 0" }, "新しい単語はこの範囲から出ます。練習モードもこの範囲を使います。")));
+
+  // modes
+  const mode = (ic, t, d, fn) => h("button", { class: "mode", onclick: fn }, h("span", { class: "mode-ic" }, ic), h("span", null, h("b", null, t), h("small", null, d)), h("span", { html: ICON.chev }));
+  v.append(h("div", null, h("h2", null, "練習モード"),
+    h("div", { class: "modes" },
+      mode("카", "カード", "めくって確認。左右にスワイプで「まだ」「覚えた」に仕分け", startCards),
+      mode("학", "学習", "4択から記述へ。7語ずつのラウンドで全部を習得するまで", startLearn),
+      mode("시", "テスト", "4択・○×・記述をまとめて解いて採点", startTest),
+      mode("짝", "マッチ", "韓国語と意味のペアを早く揃えるタイムアタック", startMatch))));
+}
+
+/* ---------- list ---------- */
+const LV = { q: "", lesson: 0, st: "all", shown: 80, open: null };
+function renderList() {
+  const v = $("#v-list");
+  if (!v.firstChild) {
+    const inp = h("input", { id: "q", type: "search", placeholder: "検索（韓国語・日本語）", autocomplete: "off", value: LV.q });
+    inp.addEventListener("input", () => { LV.q = inp.value; LV.shown = 80; drawRows(); });
+    const sel = h("select", { id: "lf", "aria-label": "課で絞り込み" }, h("option", { value: 0 }, "すべての課"), LESSONS.map(n => h("option", { value: n }, `第${n}課`)));
+    sel.addEventListener("change", () => { LV.lesson = +sel.value; LV.shown = 80; drawRows(); });
+    const fb = (k, t) => h("button", { class: "fbtn", "data-st": k, "aria-pressed": String(LV.st === k), onclick: () => { LV.st = k; LV.shown = 80; v.querySelectorAll(".fbtn").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.st === k))); drawRows(); } }, t);
+    v.append(h("div", { class: "search" }, inp, h("div", { class: "filters" }, sel, fb("all", "すべて"), fb("star", "★"), fb("new", "未学習"), fb("lrn", "学習中"), fb("rev", "復習中"), fb("mst", "定着"))),
+      h("p", { class: "sub num", id: "lcount", style: "margin:-16px 0 0" }), h("div", { class: "rows", id: "rows" }), h("div", { class: "more", id: "more" }));
+  }
+  drawRows();
+}
+function drawRows() {
+  const q = LV.q.trim().toLowerCase(), qk = normKo(LV.q);
+  let list = W.filter(w => (!LV.lesson || w.l.includes(LV.lesson)) &&
+    (LV.st === "all" || (LV.st === "star" ? isStar(w) : statusOf(w).k === LV.st)) &&
+    (!q || w.j.toLowerCase().includes(q) || (qk && normKo(w.k).includes(qk))));
+  $("#lcount").textContent = `${list.length}語`;
+  const rows = $("#rows"); rows.replaceChildren();
+  for (const w of list.slice(0, LV.shown)) rows.append(rowEl(w));
+  const more = $("#more"); more.replaceChildren();
+  if (list.length > LV.shown) more.append(h("button", { class: "btn btn-line btn-sm", onclick: () => { LV.shown += 150; drawRows(); } }, `さらに表示（残り${list.length - LV.shown}語）`));
+}
+function rowEl(w) {
+  const st = statusOf(w), c = cardOf(w);
+  const row = h("div", { class: "row" });
+  const main = h("button", { class: "row-main", onclick: () => { speak(w.k); LV.open = LV.open === w.k ? null : w.k; row.replaceWith(rowEl(w)); } },
+    h("span", { class: "row-ko" }, w.k), h("span", { class: "row-ja" }, w.j));
+  row.append(main, h("div", { class: "row-side" }, h("span", { class: "st " + st.cls }, st.t), starBtn(w)));
+  if (LV.open === w.k) {
+    row.append(h("div", { class: "row-detail num" },
+      w.p ? h("span", null, "品詞 " + w.p) : null,
+      h("span", null, lessonLabel(w)),
+      w.n ? h("span", null, w.n) : null,
+      c && c.s > 0 ? h("span", null, `次の復習 ${fmtDue(c.due)}`) : h("span", null, "まだ復習に入っていません"),
+      c && c.s === 2 ? h("span", null, `間隔 ${c.iv}日`) : null,
+      c ? h("span", null, `回答 ${c.r}回・忘れた ${c.l}回`) : null));
+  }
+  return row;
+}
+
+/* ---------- settings ---------- */
+let resetArm = false;
+function renderSettings() {
+  const v = $("#v-set"); v.replaceChildren();
+  const seg = (key, opts, after) => h("div", { class: "seg", role: "group" }, opts.map(([val, t]) =>
+    h("button", { "aria-pressed": String(P.prefs[key] === val), onclick: () => { setPref(key, val); after && after(); renderSettings(); } }, t)));
+  const ttsSw = h("button", { class: "toggle", role: "switch", "aria-checked": String(P.prefs.tts), "aria-label": "自動で読み上げ", onclick: () => { setPref("tts", !P.prefs.tts); renderSettings(); } }, h("span", { class: "sw" }));
+  v.append(h("div", null, h("h2", null, "学習"), h("div", { class: "set-group" },
+    h("div", { class: "set-row" }, h("div", null, "出題の向き", h("small", null, "カードの表に出す言語")), seg("dir", [["ko", "韓→日"], ["ja", "日→韓"], ["mix", "混ぜる"]])),
+    h("div", { class: "set-row" }, h("div", null, "1日の新しい単語", h("small", null, `今日はあと ${Math.max(0, P.prefs.newPerDay - newToday())} 語`)), seg("newPerDay", [[10, "10"], [20, "20"], [30, "30"], [50, "50"]])),
+    h("div", { class: "set-row" }, h("div", null, "新しい単語の順番"), seg("order", [["lesson", "課の順"], ["random", "ランダム"]])),
+    h("div", { class: "set-row" }, h("div", null, "韓国語を自動で読み上げ", h("small", null, "iPhoneでは消音モードだと鳴りません")), ttsSw),
+    h("div", { class: "set-row" }, h("div", null, "読み上げの速さ"), h("div", { style: "display:flex;gap:8px;align-items:center" }, seg("rate", [[0.7, "ゆっくり"], [0.85, "ふつう"], [1, "速め"]]), spkBtn("안녕하세요"))))));
+
+  v.append(h("div", null, h("h2", null, "復習の間隔"), h("p", { class: "note", style: "margin:0" },
+    "評価ボタンで次に出る時期が決まります。「もう一度」は数分後、「普通」は初回なら翌日、「簡単」は4日後。正解を重ねるほど間隔が伸び、21日以上空いた単語を「定着」と数えます。日付の切り替えは朝4時です。")));
+
+  const ta = h("textarea", { class: "backup", id: "bk", placeholder: "ここにバックアップを貼り付けて「復元」", spellcheck: "false" });
+  const syncText = cloud.ref ? (cloud.state === "pending" ? "同期待ち（オンラインになると保存）" : "この端末と claude.ai のアカウントに保存") : "この端末（ブラウザ）に保存";
+  v.append(h("div", null, h("h2", null, "データ"), h("div", { class: "set-group" },
+    h("div", { class: "set-row" }, h("div", null, "保存先", h("small", null, syncText))),
+    h("div", { class: "set-row", style: "flex-direction:column;align-items:stretch" },
+      h("div", null, "バックアップと引っ越し", h("small", null, "別のブラウザやホーム画面アプリに進み具合を移せます")),
+      ta,
+      h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
+        h("button", { class: "btn btn-line btn-sm", onclick: () => { const s = btoa(unescape(encodeURIComponent(JSON.stringify(P)))); ta.value = s; ta.select(); (navigator.clipboard ? navigator.clipboard.writeText(s) : Promise.reject()).then(() => toast("コピーしました"), () => toast("選択した文字列をコピーしてください")); } }, "バックアップをコピー"),
+        h("button", { class: "btn btn-line btn-sm", onclick: () => { try { const R = JSON.parse(decodeURIComponent(escape(atob(ta.value.trim())))); if (!R.cards) throw 0; mergeInto(R, true); flushSave(); ta.value = ""; toast("復元しました"); renderSettings(); } catch (e) { toast("読み込めませんでした。全文を貼り付けてください"); } } }, "復元"))),
+    h("div", { class: "set-row" }, h("div", null, "進み具合をリセット", h("small", null, resetArm ? "もう一度押すと全ての記録を消します" : "★と設定は残ります")),
+      h("button", { class: "btn btn-sm " + (resetArm ? "btn-p" : "btn-line"), style: resetArm ? "background:var(--again);color:#fff" : "", onclick: () => {
+        if (!resetArm) { resetArm = true; renderSettings(); setTimeout(() => { if (resetArm) { resetArm = false; if (tab === "set") renderSettings(); } }, 5000); return; }
+        resetArm = false; const now = Date.now(); for (const k in P.cards) P.cards[k] = { s: 0, st: 0, iv: 0, ef: 2.5, r: 0, l: 0, due: 0, u: now };
+        P.days = {}; P.newLog = { d: "", n: 0 }; P.best = {}; flushSave(); toast("リセットしました"); renderSettings(); } }, resetArm ? "消去する" : "リセット")))));
+
+  v.append(h("div", null, h("h2", null, "ホーム画面に追加"), h("div", { class: "note" },
+    h("ol", null, h("li", null, "Safari でこのページを開く"), h("li", null, "下の共有ボタン（四角から矢印）をタップ"), h("li", null, "「ホーム画面に追加」を選ぶ")))));
+  v.append(h("p", { class: "sub num", style: "margin:0" }, `収録 ${W.length}語（元のリスト ${RAW_ROWS}行から重複を${RAW_ROWS - W.length}件まとめました）・第${LESSONS[0]}〜${LESSONS[LESSONS.length - 1]}課`));
+}
+
+/* ---------- study sheet ---------- */
+let S = null; // current session
+let keyHandler = null;
+function openSheet(title, sub) {
+  $("#study").hidden = false; document.body.style.overflow = "hidden";
+  try { document.activeElement && document.activeElement.blur(); } catch (e) {}
+  setTitle(title, sub); setProg(0); setAux(null);
+}
+function setTitle(t, sub) { const el = $("#s-title"); el.replaceChildren(t, sub != null ? h("small", null, sub) : ""); }
+function setProg(p) { $("#s-prog").style.width = Math.max(0, Math.min(1, p)) * 100 + "%"; }
+function setAux(btn) { const a = $("#s-aux"); a.replaceWith(btn || h("button", { class: "icon-btn", id: "s-aux", hidden: true })); if (btn) btn.id = "s-aux"; }
+function body() { return $("#s-body"); }
+function closeSheet() {
+  if (S && S.onClose) S.onClose();
+  S = null; keyHandler = null;
+  try { speechSynthesis.cancel(); } catch (e) {}
+  $("#study").hidden = true; document.body.style.overflow = ""; body().replaceChildren();
+  flushSave(); rerender();
+}
+$("#s-close").addEventListener("click", closeSheet);
+document.addEventListener("keydown", e => {
+  if ($("#study").hidden) return;
+  if (e.key === "Escape") { closeSheet(); return; }
+  if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") { if (e.key !== "Enter") return; }
+  if (e.target.tagName === "BUTTON" && (e.key === "Enter" || e.key === " ")) return;
+  keyHandler && keyHandler(e);
+});
+function emptyState(title, text) {
+  body().replaceChildren(h("div", { class: "empty" }, h("h3", null, title), h("p", { class: "sub", style: "margin:0" }, text), h("button", { class: "btn btn-s", onclick: closeSheet }, "戻る")));
+}
+function face(w, side, dir) {
+  // side "q" = prompt side
+  const showKo = (side === "q") === (dir === "ko");
+  return showKo ? h("div", { class: "big-ko", lang: "ko" }, w.k) : h("div", { class: "big-ja" }, w.j);
+}
+
+/* ---------- 1. SRS review ---------- */
+function startReview() {
+  const now = Date.now();
+  const rev = shuffle(W.filter(w => { const c = cardOf(w); return c && c.s === 2 && c.due <= now; }));
+  const lrn = W.filter(w => { const c = cardOf(w); return c && (c.s === 1 || c.s === 3); }).sort((a, b) => cardOf(a).due - cardOf(b).due);
+  const news = newQueue();
+  const main = []; let ni = 0;
+  rev.forEach((w, i) => { main.push(w); if (i % 3 === 2 && ni < news.length) main.push(news[ni++]); });
+  while (ni < news.length) main.push(news[ni++]);
+  S = { kind: "review", main, lrn, cur: null, dir: "ko", shown: false, done: 0, hist: [], total: main.length + lrn.filter(w => cardOf(w).due <= now + 20 * MIN).length };
+  openSheet("復習", "");
+  nextReview();
+}
+function reviewLeft() { return S.main.length + S.lrn.length + (S.cur ? 1 : 0); }
+function nextReview() {
+  const now = Date.now();
+  S.lrn.sort((a, b) => cardOf(a).due - cardOf(b).due);
+  let w = null;
+  if (S.lrn.length && cardOf(S.lrn[0]).due <= now) w = S.lrn.shift();
+  else if (S.main.length) w = S.main.shift();
+  else if (S.lrn.length && cardOf(S.lrn[0]).due <= now + 20 * MIN) w = S.lrn.shift();
+  S.cur = w; S.shown = false; S.dir = pickDir();
+  const undo = h("button", { class: "icon-btn", "aria-label": "1つ前に戻す", html: ICON.undo, disabled: !S.hist.length, onclick: undoReview });
+  setAux(undo);
+  if (!w) return reviewDone();
+  const c = cardOf(w);
+  const tag = !c || c.s === 0 ? "新しい単語" : c.s === 2 ? "復習" : "学習中";
+  setTitle("復習", `残り ${reviewLeft()} ・ ${tag}`);
+  setProg(S.done / Math.max(1, S.done + reviewLeft()));
+  drawReview();
+  if (S.dir === "ko" && P.prefs.tts) speak(w.k);
+}
+function drawReview() {
+  const w = S.cur, b = body();
+  const card = h("div", { class: "card rv-card", onclick: () => { if (!S.shown) reveal(); } },
+    h("span", { class: "card-meta" }, [lessonLabel(w), w.pos0].filter(Boolean).join(" ・ ")),
+    h("div", { class: "card-tools" }, spkBtn(w.k), starBtn(w)),
+    face(w, "q", S.dir));
+  if (S.shown) {
+    card.append(h("div", { class: "rv-ans" },
+      S.dir === "ko" ? h("div", { class: "big-ja" }, w.j) : h("div", { class: "big-ko", lang: "ko" }, w.k),
+      w.n ? h("div", { class: "pos" }, w.n) : null,
+      w.p ? h("div", { class: "pos" }, w.p) : null));
+  }
+  const foot = h("div", { class: "rv-foot" });
+  if (!S.shown) foot.append(h("button", { class: "btn btn-p btn-block", style: "min-height:62px", onclick: reveal }, "答えを見る"), h("div", { class: "kbd-hint" }, "スペースで答え ・ 1〜4で評価"));
+  else {
+    const now = Date.now(), c = cardOf(w);
+    const lab = ["もう一度", "難しい", "普通", "簡単"];
+    foot.append(h("div", { class: "rates" }, [1, 2, 3, 4].map(g => {
+      const nc = schedule(c, g, now, false);
+      const label = nc.s === 2 ? (dayIndex(nc.due) - dayIndex(now)) + "日" : fmtDur(nc.due - now);
+      return h("button", { class: "rate r" + g, onclick: () => rate(g) }, h("b", null, lab[g - 1]), h("span", null, label));
+    })), h("div", { class: "kbd-hint" }, "1 もう一度 ・ 2 難しい ・ 3 普通 ・ 4 簡単"));
+  }
+  b.replaceChildren(card, foot);
+  keyHandler = e => {
+    if (!S || S.kind !== "review" || !S.cur) return;
+    if (!S.shown && (e.key === " " || e.key === "Enter")) { e.preventDefault(); reveal(); }
+    else if (S.shown && "1234".includes(e.key) && e.key.length === 1) { e.preventDefault(); rate(+e.key); }
+  };
+}
+function reveal() { S.shown = true; drawReview(); if (S.dir === "ja" && P.prefs.tts) speak(S.cur.k); }
+function rate(g) {
+  const w = S.cur, prev = cardOf(w) ? { ...cardOf(w) } : null, wasNew = isNew(w);
+  S.hist.push({ w, prev, wasNew, main: S.main.slice(), lrn: S.lrn.slice(), done: S.done, newLog: { ...P.newLog }, dayN: P.days[dayKey()] || 0 });
+  const nc = schedule(prev, g);
+  P.cards[w.k] = nc;
+  if (wasNew) { const k = dayKey(); if (P.newLog.d !== k) P.newLog = { d: k, n: 0 }; P.newLog.n++; }
+  logActivity();
+  if ((nc.s === 1 || nc.s === 3) && nc.due - Date.now() <= 20 * MIN) S.lrn.push(w); else S.done++;
+  S.cur = null; save(); nextReview();
+}
+function undoReview() {
+  const hs = S.hist.pop(); if (!hs) return;
+  P.cards[hs.w.k] = { ...(hs.prev || { s: 0, st: 0, iv: 0, ef: 2.5, r: 0, l: 0, due: 0 }), u: Date.now() };
+  P.newLog = hs.newLog; P.days[dayKey()] = hs.dayN;
+  S.main = hs.main; S.lrn = hs.lrn; S.done = hs.done;
+  S.main.unshift(hs.w); S.cur = null; save(); nextReview();
+}
+function reviewDone() {
+  setProg(1); setTitle("復習", "完了"); keyHandler = null;
+  const nd = W.map(cardOf).filter(c => c && c.s >= 1 && c.due > Date.now()).sort((a, b) => a.due - b.due)[0];
+  const tomorrow = W.filter(w => { const c = cardOf(w); return c && c.s >= 1 && dayIndex(c.due) === dayIndex() + 1; }).length;
+  body().replaceChildren(h("div", { class: "res" },
+    h("h3", null, S.done ? "今日の分はここまで" : "今は復習する単語がありません"),
+    h("div", { class: "res-score" }, h("b", null, S.done), h("span", { class: "sub" }, "語を復習しました")),
+    h("p", { class: "sub", style: "margin:0" }, nd ? `次の復習は${fmtDue(nd.due)}。明日は${tomorrow}語の予定です。` : "単語を学ぶと、ここに次の予定が出ます。"),
+    h("div", { class: "res-acts" },
+      h("button", { class: "btn btn-p", onclick: closeSheet }, "閉じる"),
+      h("button", { class: "btn btn-line", onclick: () => { P.newLog.n = Math.max(0, newToday() - 10); save(); startReview(); } }, "新しい単語をあと10語"))));
+}
+
+/* ---------- 2. Flashcards ---------- */
+function startCards() {
+  const pl = pool();
+  openSheet("カード", "");
+  if (!pl.length) return emptyState("単語がありません", "出題範囲を広げるか、★を外してください。");
+  S = { kind: "cards", deck: pl.slice(), order: null, i: 0, flipped: false, know: [], still: [], hist: [], shuffled: false, dirs: new Map() };
+  S.order = S.deck.slice();
+  const sh = h("button", { class: "icon-btn", "aria-label": "シャッフル", html: ICON.shuf, onclick: () => { S.shuffled = !S.shuffled; S.order = S.shuffled ? shuffle(S.deck) : S.deck.slice(); S.i = 0; S.know = []; S.still = []; S.hist = []; toast(S.shuffled ? "シャッフルしました" : "元の順番に戻しました"); drawCard(); } });
+  setAux(sh);
+  drawCard();
+}
+function drawCard() {
+  const n = S.order.length;
+  if (S.i >= n) return cardsDone();
+  const w = S.order[S.i];
+  if (!S.dirs.has(w.k)) S.dirs.set(w.k, pickDir());
+  const dir = S.dirs.get(w.k);
+  setTitle("カード", `${S.i + 1} / ${n}`); setProg(S.i / n);
+  const fl = h("div", { class: "fl" + (S.flipped ? " flipped" : "") },
+    h("div", { class: "face card front" }, h("span", { class: "card-meta" }, lessonLabel(w)), h("div", { class: "card-tools" }, spkBtn(w.k), starBtn(w)), face(w, "q", dir)),
+    h("div", { class: "face card back" }, h("span", { class: "card-meta" }, w.p || ""), h("div", { class: "card-tools" }, spkBtn(w.k), starBtn(w)), face(w, "a", dir), w.n ? h("div", { class: "sub" }, w.n) : null));
+  const sl = h("div", { class: "fl-stamp l" }, "まだ"), sr = h("div", { class: "fl-stamp r" }, "覚えた");
+  const drag = h("div", { class: "fl-drag" }, fl, sl, sr);
+  const wrap = h("div", { class: "fl-wrap" }, drag);
+  // gestures
+  let sx = 0, sy = 0, dx = 0, active = false, moved = false;
+  drag.addEventListener("pointerdown", e => { if (e.target.closest("button")) return; active = true; moved = false; sx = e.clientX; sy = e.clientY; dx = 0; drag.setPointerCapture(e.pointerId); drag.style.transition = "none"; });
+  drag.addEventListener("pointermove", e => { if (!active) return; dx = e.clientX - sx; const dy = e.clientY - sy; if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) moved = true; if (!moved) return; drag.style.transform = `translateX(${dx}px) rotate(${dx / 30}deg)`; sl.style.opacity = Math.max(0, -dx / 100); sr.style.opacity = Math.max(0, dx / 100); });
+  const end = () => {
+    if (!active) return; active = false;
+    if (!moved) { S.flipped = !S.flipped; fl.classList.toggle("flipped", S.flipped); if (P.prefs.tts && ((dir === "ko") !== S.flipped)) speak(w.k); return; }
+    if (Math.abs(dx) > 90) { drag.style.transition = "transform .2s ease-in"; drag.style.transform = `translateX(${dx > 0 ? 600 : -600}px) rotate(${dx / 15}deg)`; setTimeout(() => sortCard(dx > 0), 180); }
+    else { drag.style.transition = "transform .2s"; drag.style.transform = ""; sl.style.opacity = 0; sr.style.opacity = 0; }
+  };
+  drag.addEventListener("pointerup", end); drag.addEventListener("pointercancel", end);
+  const back = h("button", { class: "icon-btn", "aria-label": "1つ戻る", html: ICON.undo, disabled: !S.hist.length, onclick: () => { const x = S.hist.pop(); if (!x) return; S.i--; (x ? S.know : S.still).pop(); S.flipped = false; drawCard(); } });
+  body().replaceChildren(
+    h("div", { class: "tally" }, h("span", { class: "l" }, `まだ ${S.still.length}`), h("span", { class: "sub" }, "タップでめくる"), h("span", { class: "r" }, `覚えた ${S.know.length}`)),
+    wrap,
+    h("div", { class: "fl-foot" },
+      h("button", { class: "btn b-still", onclick: () => sortCard(false) }, "まだ"), back,
+      h("button", { class: "btn b-know", onclick: () => sortCard(true) }, "覚えた")));
+  if (P.prefs.tts && dir === "ko" && !S.flipped) speak(w.k);
+  keyHandler = e => {
+    if (e.key === " ") { e.preventDefault(); S.flipped = !S.flipped; fl.classList.toggle("flipped", S.flipped); }
+    else if (e.key === "ArrowRight") sortCard(true); else if (e.key === "ArrowLeft") sortCard(false);
+  };
+}
+function sortCard(know) {
+  const w = S.order[S.i]; (know ? S.know : S.still).push(w); S.hist.push(know);
+  S.i++; S.flipped = false; logActivity(); save(); drawCard();
+}
+function cardsDone() {
+  setProg(1); setTitle("カード", "おしまい"); keyHandler = null;
+  const st = S.still.slice();
+  body().replaceChildren(h("div", { class: "res" },
+    h("h3", null, st.length ? "もうひと押し" : "全部覚えました"),
+    h("div", { class: "res-score" }, h("b", null, S.know.length), h("span", { class: "sub" }, `/ ${S.order.length} 語を覚えた`)),
+    st.length ? h("div", null, h("h2", null, "まだの単語"), h("div", { class: "res-list" }, st.slice(0, 30).map(w => h("div", { class: "res-item" }, h("span", { class: "mk ng" }, "・"), h("div", null, h("span", { class: "ko" }, w.k), h("small", null, w.j)))))) : null,
+    h("div", { class: "res-acts" },
+      st.length ? h("button", { class: "btn btn-p", onclick: () => { S.order = S.shuffled ? shuffle(st) : st; S.i = 0; S.know = []; S.still = []; S.hist = []; drawCard(); } }, `まだの${st.length}語をもう一度`) : null,
+      st.length ? h("button", { class: "btn btn-line", onclick: () => { st.forEach(w => toggleStar(w, true)); toast(`${st.length}語に★を付けました`); } }, "まだの単語に★を付ける") : null,
+      h("button", { class: "btn btn-line", onclick: () => { S.order = S.shuffled ? shuffle(S.deck) : S.deck.slice(); S.i = 0; S.know = []; S.still = []; S.hist = []; drawCard(); } }, "最初から"),
+      h("button", { class: "btn btn-s", onclick: closeSheet }, "閉じる"))));
+}
+
+/* ---------- shared question widgets ---------- */
+function mcQuestion(w, dir, onDone, opts = {}) {
+  const field = dir === "ko" ? "j" : "k";
+  const os = options(w, field);
+  const wrap = h("div", { class: "q" });
+  const prompt = h("div", { class: "card q-prompt" }, h("span", { class: "card-meta" }, lessonLabel(w)), h("div", { class: "card-tools" }, spkBtn(w.k)),
+    h("span", { class: "q-label" }, dir === "ko" ? "意味を選ぶ" : "韓国語を選ぶ"), face(w, "q", dir));
+  const list = h("div", { class: "opts" });
+  let answered = false;
+  const choose = (x, btn) => {
+    if (answered) return; answered = true;
+    const ok = x.k === w.k;
+    list.querySelectorAll(".opt").forEach(b => { b.disabled = true; if (b.dataset.k === w.k) b.classList.add("ok"); });
+    if (!ok) btn.classList.add("ng");
+    if (P.prefs.tts) speak(w.k);
+    onDone(ok, wrap, x);
+  };
+  os.forEach((x, i) => { const b = h("button", { class: "opt" + (field === "k" ? " ko-opt" : ""), "data-k": x.k }, h("span", { class: "n" }, i + 1), x[field]); b.addEventListener("click", () => choose(x, b)); list.append(b); });
+  wrap.append(prompt, list);
+  keyHandler = e => { if ("1234".includes(e.key) && e.key.length === 1) { const b = list.children[+e.key - 1]; b && b.click(); } else if (opts.onKey) opts.onKey(e); };
+  if (dir === "ko" && P.prefs.tts) speak(w.k);
+  return wrap;
+}
+function writtenQuestion(w, onDone) {
+  const wrap = h("div", { class: "q" });
+  const inp = h("input", { id: "wr-in", type: "text", lang: "ko", autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: "韓国語で入力", "aria-label": "韓国語で答える" });
+  let answered = false;
+  const check = (giveUp) => {
+    if (answered) return; answered = true;
+    const v = normKo(inp.value);
+    const ok = !giveUp && v && koAlts(w.k).includes(v);
+    inp.disabled = true; inp.classList.add(ok ? "ok" : "ng");
+    if (P.prefs.tts) speak(w.k);
+    onDone(ok, wrap, inp.value);
+  };
+  wrap.append(
+    h("div", { class: "card q-prompt" }, h("span", { class: "card-meta" }, lessonLabel(w)), h("span", { class: "q-label" }, "韓国語で書く"), h("div", { class: "big-ja" }, w.j)),
+    h("form", { class: "wr", onsubmit: e => { e.preventDefault(); check(false); } }, inp, h("button", { class: "btn btn-p", type: "submit" }, "答える")),
+    h("div", null, h("button", { class: "link", type: "button", onclick: () => check(true) }, "わからない")));
+  setTimeout(() => { try { inp.focus(); } catch (e) {} }, 60);
+  keyHandler = null;
+  return wrap;
+}
+function feedback(ok, w, extra) {
+  if (ok) return h("div", { class: "fb ok", role: "status" }, h("b", null, "正解"));
+  return h("div", { class: "fb ng", role: "status" }, h("span", { class: "t" }, "ちがいます"), h("span", null, "正解：", h("span", { class: "ans" }, w.k), "　", w.j), extra || null);
+}
+
+/* ---------- 3. Learn ---------- */
+function startLearn() {
+  const pl = pool();
+  openSheet("学習", "");
+  if (pl.length < 2) return emptyState("単語が足りません", "出題範囲を広げてください。");
+  const st = { size: Math.min(20, pl.length), written: true };
+  const draw = () => {
+    const sizes = [...new Set([10, 20, 50, pl.length].filter(n => n <= pl.length))];
+    body().replaceChildren(h("div", { class: "setup" },
+      h("h3", null, "学習"),
+      h("p", { class: "sub" }, "最初は4択、正解したら記述（日本語を見て韓国語を入力）。両方正解で「習得」です。7語ずつのラウンドで進みます。"),
+      h("div", null, h("h2", null, `覚える単語の数（範囲 ${pl.length}語）`), h("div", { class: "checks" }, sizes.map(n => h("button", { class: "check", "aria-pressed": String(st.size === n), onclick: () => { st.size = n; draw(); } }, n === pl.length ? `全部 ${n}` : n)))),
+      h("div", null, h("h2", null, "2回目の出題"), h("div", { class: "checks" },
+        h("button", { class: "check", "aria-pressed": String(st.written), onclick: () => { st.written = true; draw(); } }, "記述（ハングル入力）"),
+        h("button", { class: "check", "aria-pressed": String(!st.written), onclick: () => { st.written = false; draw(); } }, "4択（逆向き）"))),
+      h("p", { class: "sub" }, "記述にはキーボードに「韓国語 - 2ボル式」の追加が必要です（設定 › 一般 › キーボード）。"),
+      h("button", { class: "btn btn-p btn-block", onclick: () => beginLearn(st) }, "始める")));
+  };
+  S = { kind: "learn-setup" }; draw();
+}
+function beginLearn(opt) {
+  const pl = pool();
+  // prefer words that are weak in SRS: not yet mastered, then random
+  const items = shuffle(pl).sort((a, b) => (statusOf(a).k === "mst") - (statusOf(b).k === "mst")).slice(0, opt.size);
+  S = { kind: "learn", items, lv: new Map(items.map(w => [w.k, 0])), round: [], qi: 0, written: opt.written, rn: 0, results: [] };
+  nextRound();
+}
+function learnProgress() { let s = 0; S.lv.forEach(v => s += v); return s / (S.items.length * 2); }
+function nextRound() {
+  const rest = S.items.filter(w => S.lv.get(w.k) < 2);
+  if (!rest.length) return learnDone();
+  rest.sort((a, b) => S.lv.get(b.k) - S.lv.get(a.k) || Math.random() - .5);
+  S.round = shuffle(rest.slice(0, 7)); S.qi = 0; S.rn++; S.results = [];
+  askLearn();
+}
+function askLearn() {
+  if (S.qi >= S.round.length) return roundSummary();
+  const w = S.round[S.qi], lv = S.lv.get(w.k);
+  const mastered = [...S.lv.values()].filter(v => v === 2).length;
+  setTitle(`学習 ・ ラウンド${S.rn}`, `習得 ${mastered} / ${S.items.length}`); setProg(learnProgress());
+  const done = (ok, wrap, given) => {
+    S.results.push({ w, ok });
+    if (ok) { S.lv.set(w.k, lv + 1); logActivity(); }
+    const next = h("button", { class: "btn btn-p btn-block", onclick: () => { S.qi++; askLearn(); } }, "続ける");
+    const over = lv === 1 && S.written && !ok && given ? h("div", { class: "fb-acts" }, h("button", { class: "link", onclick: () => { S.results[S.results.length - 1].ok = true; S.lv.set(w.k, 2); S.qi++; askLearn(); } }, "正解にする（入力ミス）")) : null;
+    wrap.append(feedback(ok, w, over));
+    if (ok) setTimeout(() => { if (S && S.kind === "learn" && S.round[S.qi] === w) { S.qi++; askLearn(); } }, 900);
+    else { wrap.append(next); keyHandler = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); next.click(); } }; setTimeout(() => next.focus(), 30); }
+    save();
+  };
+  let q;
+  if (lv === 0) q = mcQuestion(w, pickDir(), done);
+  else if (S.written) q = writtenQuestion(w, done);
+  else q = mcQuestion(w, P.prefs.dir === "ja" ? "ko" : "ja", done);
+  body().replaceChildren(q);
+}
+function roundSummary() {
+  setProg(learnProgress()); keyHandler = null;
+  const mastered = [...S.lv.values()].filter(v => v === 2).length, fam = [...S.lv.values()].filter(v => v === 1).length;
+  const n = S.items.length, pc = x => x / n * 100 + "%";
+  const cont = h("button", { class: "btn btn-p btn-block", onclick: nextRound }, mastered === n ? "結果を見る" : "次のラウンドへ");
+  body().replaceChildren(h("div", { class: "res" },
+    h("h3", null, `ラウンド${S.rn} 終了`),
+    h("div", null, h("div", { class: "stack" }, h("i", { style: `width:${pc(mastered)};background:var(--good)` }), h("i", { style: `width:${pc(fam)};background:var(--hard)` })),
+      h("div", { class: "legend num" }, h("span", null, h("i", { class: "dot", style: "background:var(--good)" }), `習得 ${mastered}`), h("span", null, h("i", { class: "dot", style: "background:var(--hard)" }), `もう少し ${fam}`), h("span", null, h("i", { class: "dot", style: "background:var(--sunk);border:1px solid var(--line)" }), `これから ${n - mastered - fam}`))),
+    h("div", { class: "res-list" }, S.results.map(r => h("div", { class: "res-item" }, h("span", { class: "mk " + (r.ok ? "ok" : "ng") }, r.ok ? "○" : "×"), h("div", null, h("span", { class: "ko" }, r.w.k), h("small", null, r.w.j))))),
+    cont));
+  keyHandler = e => { if (e.key === "Enter") cont.click(); };
+}
+function learnDone() {
+  setProg(1); setTitle("学習", "完了"); keyHandler = null;
+  body().replaceChildren(h("div", { class: "res" },
+    h("h3", null, `${S.items.length}語を習得しました`),
+    h("p", { class: "sub", style: "margin:0" }, `${S.rn - 1}ラウンドかかりました。忘れないうちに「今日の復習」にも入れておきましょう。`),
+    h("div", { class: "res-acts" },
+      h("button", { class: "btn btn-p", onclick: () => startLearn() }, "別の単語で続ける"),
+      h("button", { class: "btn btn-s", onclick: closeSheet }, "閉じる"))));
+}
+
+/* ---------- 4. Test ---------- */
+function startTest() {
+  const pl = pool();
+  openSheet("テスト", "");
+  if (pl.length < 4) return emptyState("単語が足りません", "テストには4語以上必要です。出題範囲を広げてください。");
+  const st = { n: Math.min(20, pl.length), types: new Set(["mc", "tf", "wr"]) };
+  const draw = () => {
+    const ns = [...new Set([10, 20, 30, 50].map(n => Math.min(n, pl.length)))];
+    const tb = (k, t) => h("button", { class: "check", "aria-pressed": String(st.types.has(k)), onclick: () => { st.types.has(k) ? st.types.size > 1 && st.types.delete(k) : st.types.add(k); draw(); } }, t);
+    body().replaceChildren(h("div", { class: "setup" },
+      h("h3", null, "テスト"),
+      h("p", { class: "sub" }, `範囲 ${pl.length}語からランダムに出題します。全部答えてから採点します。`),
+      h("div", null, h("h2", null, "問題数"), h("div", { class: "checks" }, ns.map(n => h("button", { class: "check", "aria-pressed": String(st.n === n), onclick: () => { st.n = n; draw(); } }, n + "問")))),
+      h("div", null, h("h2", null, "問題の形式"), h("div", { class: "checks" }, tb("mc", "4択"), tb("tf", "○×"), tb("wr", "記述"))),
+      h("button", { class: "btn btn-p btn-block", onclick: () => buildTest(st) }, "テストを作る")));
+  };
+  S = { kind: "test-setup" }; draw();
+}
+function buildTest(st) {
+  const ws = sample(pool(), st.n), types = [...st.types];
+  const qs = ws.map((w, i) => {
+    const t = types[i % types.length], dir = pickDir();
+    if (t === "mc") return { t, w, dir, os: options(w, dir === "ko" ? "j" : "k"), a: null };
+    if (t === "tf") { const truth = Math.random() < .5; const other = truth ? w : options(w, "j").find(x => x.k !== w.k) || w; return { t, w, other, truth: other === w, a: null }; }
+    return { t, w, a: "" };
+  });
+  S = { kind: "test", qs, graded: false };
+  drawTest();
+}
+function drawTest() {
+  const qs = S.qs; setTitle("テスト", `${qs.length}問`); keyHandler = null;
+  const answered = () => qs.filter(q => q.t === "wr" ? q.a.trim() : q.a !== null).length;
+  const upd = () => { setProg(answered() / qs.length); submit.textContent = `採点する（${answered()} / ${qs.length}）`; };
+  const list = h("div");
+  qs.forEach((q, i) => {
+    const head = h("div", { class: "tq-h num" }, h("span", null, `${i + 1} / ${qs.length}`), h("span", null, { mc: "4択", tf: "○×", wr: "記述" }[q.t]));
+    let el;
+    if (q.t === "mc") {
+      const field = q.dir === "ko" ? "j" : "k";
+      const opts = h("div", { class: "opts" });
+      q.os.forEach((x, j) => { const b = h("button", { class: "opt" + (field === "k" ? " ko-opt" : ""), "aria-pressed": "false" }, h("span", { class: "n" }, j + 1), x[field]);
+        b.addEventListener("click", () => { q.a = x; opts.querySelectorAll(".opt").forEach(o => { o.style.borderColor = ""; o.style.background = ""; }); b.style.borderColor = "var(--accent)"; b.style.background = "var(--accent-soft)"; upd(); }); opts.append(b); });
+      el = h("div", { class: "tq" }, head, h("div", { class: "tq-p" + (q.dir === "ko" ? " ko" : "") }, q.dir === "ko" ? q.w.k : q.w.j), opts);
+    } else if (q.t === "tf") {
+      const tf = h("div", { class: "tf" });
+      [["○ 正しい", true], ["× ちがう", false]].forEach(([t, v]) => { const b = h("button", { class: "opt", style: "justify-content:center" }, t);
+        b.addEventListener("click", () => { q.a = v; tf.querySelectorAll(".opt").forEach(o => { o.style.borderColor = ""; o.style.background = ""; }); b.style.borderColor = "var(--accent)"; b.style.background = "var(--accent-soft)"; upd(); }); tf.append(b); });
+      el = h("div", { class: "tq" }, head, h("div", { class: "tf-pair" }, h("span", { class: "ko" }, q.w.k), h("span", null, q.other.j)), tf);
+    } else {
+      const inp = h("input", { type: "text", lang: "ko", autocomplete: "off", autocapitalize: "off", spellcheck: "false", placeholder: "韓国語で入力", "aria-label": `${i + 1}問目の答え` });
+      inp.addEventListener("input", () => { q.a = inp.value; upd(); });
+      el = h("div", { class: "tq" }, head, h("div", { class: "tq-p" }, q.w.j), h("div", { class: "wr" }, inp));
+    }
+    list.append(el);
+  });
+  const submit = h("button", { class: "btn btn-p btn-block", style: "margin-top:20px", onclick: gradeTest }, "");
+  body().replaceChildren(list, submit); upd(); body().scrollTop = 0;
+}
+function gradeTest() {
+  const qs = S.qs; let score = 0;
+  qs.forEach(q => {
+    if (q.t === "mc") q.ok = !!q.a && q.a.k === q.w.k;
+    else if (q.t === "tf") q.ok = q.a !== null && q.a === q.truth;
+    else q.ok = !!normKo(q.a) && koAlts(q.w.k).includes(normKo(q.a));
+    if (q.ok) score++;
+  });
+  logActivity(qs.length); save();
+  const wrong = qs.filter(q => !q.ok).map(q => q.w);
+  const pct = Math.round(score / qs.length * 100);
+  setProg(1); setTitle("テスト", "結果");
+  const yourAns = q => q.t === "mc" ? (q.a ? (q.dir === "ko" ? q.a.j : q.a.k) : "未回答") : q.t === "tf" ? (q.a === null ? "未回答" : q.a ? "○" : "×") + `（${q.other.j}）` : (q.a.trim() || "未回答");
+  body().replaceChildren(h("div", { class: "res" },
+    h("div", { class: "res-score" }, h("b", null, pct), h("span", { class: "sub" }, `点 ・ ${score} / ${qs.length}問正解`)),
+    h("div", { class: "res-acts" },
+      wrong.length ? h("button", { class: "btn btn-line", onclick: () => { wrong.forEach(w => toggleStar(w, true)); toast(`${wrong.length}語に★を付けました`); } }, "間違えた単語に★を付ける") : null,
+      h("button", { class: "btn btn-p", onclick: startTest }, "もう一度テスト")),
+    h("div", null, h("h2", null, "答え合わせ"), h("div", { class: "res-list" }, qs.map(q => h("div", { class: "res-item" },
+      h("span", { class: "mk " + (q.ok ? "ok" : "ng") }, q.ok ? "○" : "×"),
+      h("div", null, h("span", { class: "ko" }, q.w.k), h("small", null, q.w.j), !q.ok ? h("small", { class: "yours" }, "あなたの答え：" + yourAns(q)) : null))))),
+    h("button", { class: "btn btn-s", onclick: closeSheet }, "閉じる")));
+  body().scrollTop = 0;
+}
+
+/* ---------- 5. Match ---------- */
+function startMatch() {
+  const pl = pool();
+  openSheet("マッチ", "");
+  if (pl.length < 3) return emptyState("単語が足りません", "出題範囲を広げてください。");
+  // avoid identical meanings in one board
+  const seenJ = new Set(), pick = [];
+  for (const w of shuffle(pl)) { if (seenJ.has(w.j)) continue; seenJ.add(w.j); pick.push(w); if (pick.length === 6) break; }
+  const tiles = shuffle(pick.flatMap(w => [{ w, side: "k" }, { w, side: "j" }]));
+  const key = "match:" + (P.prefs.lessons.join(",") || "all") + (P.prefs.starOnly ? "*" : "");
+  S = { kind: "match", tiles, sel: null, left: pick.length, t0: performance.now(), pen: 0, raf: 0, key, onClose: () => cancelAnimationFrame(S.raf) };
+  const time = h("span", { class: "mt-time", id: "mt-time" }, "0.0");
+  const best = P.best[key];
+  const grid = h("div", { class: "mt-grid" });
+  tiles.forEach(t => {
+    const b = h("button", { class: "tile" + (t.side === "k" ? " ko" : "") }, t.w[t.side]);
+    t.el = b;
+    b.addEventListener("click", () => tapTile(t));
+    grid.append(b);
+  });
+  setTitle("マッチ", "同じ意味の2枚をタップ");
+  body().replaceChildren(h("div", { class: "mt-head" }, time, h("span", { class: "sub num" }, best ? `ベスト ${best.toFixed(1)}秒` : "ミスは+1秒")), grid);
+  const tick = () => { if (!S || S.kind !== "match") return; $("#mt-time").textContent = ((performance.now() - S.t0) / 1000 + S.pen).toFixed(1); S.raf = requestAnimationFrame(tick); };
+  tick();
+}
+function tapTile(t) {
+  if (t.el.classList.contains("gone")) return;
+  if (!S.sel) { S.sel = t; t.el.classList.add("sel"); if (t.side === "k" && P.prefs.tts) speak(t.w.k); return; }
+  if (S.sel === t) { t.el.classList.remove("sel"); S.sel = null; return; }
+  const a = S.sel; S.sel = null; a.el.classList.remove("sel");
+  if (a.w.k === t.w.k && a.side !== t.side) {
+    a.el.classList.add("gone"); t.el.classList.add("gone"); S.left--; logActivity();
+    if (!S.left) matchDone();
+  } else {
+    S.pen += 1;
+    [a, t].forEach(x => { x.el.classList.remove("bad"); void x.el.offsetWidth; x.el.classList.add("bad"); setTimeout(() => x.el.classList.remove("bad"), 320); });
+  }
+}
+function matchDone() {
+  cancelAnimationFrame(S.raf);
+  const sec = Math.round(((performance.now() - S.t0) / 1000 + S.pen) * 10) / 10;
+  const prev = P.best[S.key], isBest = !prev || sec < prev;
+  if (isBest) P.best[S.key] = sec;
+  save(); setProg(1);
+  body().replaceChildren(h("div", { class: "res" },
+    h("h3", null, isBest && prev ? "ベスト更新" : "そろいました"),
+    h("div", { class: "res-score" }, h("b", null, sec.toFixed(1)), h("span", { class: "sub" }, "秒" + (S.pen ? `（ミス ${S.pen}回を含む）` : ""))),
+    prev && !isBest ? h("p", { class: "sub", style: "margin:0" }, `ベストは ${prev.toFixed(1)} 秒`) : null,
+    h("div", { class: "res-list" }, S.tiles.filter(t => t.side === "k").map(t => h("div", { class: "res-item" }, h("span", { class: "mk ok" }, "○"), h("div", null, h("span", { class: "ko" }, t.w.k), h("small", null, t.w.j))))),
+    h("div", { class: "res-acts" }, h("button", { class: "btn btn-p", onclick: startMatch }, "もう一度"), h("button", { class: "btn btn-s", onclick: closeSheet }, "閉じる"))));
+}
+
+/* ---------- boot ---------- */
+loadLocal();
+showTab("home");
+cloudInit();
+setInterval(() => { if ($("#study").hidden && tab === "home") renderHome(); }, 60e3);
+</script>
+
+</body>
+</html>
